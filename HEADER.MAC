@@ -1,0 +1,152 @@
+         MACRO
+&LABEL   HEADER &VERSION='1.0 ',&AUTHOR='UNK ',&DATE='(C)MMMYY',       X
+               &BASE=,&SVAREA=
+         GBLB  &HDRFLG,&HDRSVA
+         LCLA  &SEQ
+         LCLC  &LVL
+&LVL     SETC  '&SYSNDX'
+         AIF   (T'&LABEL NE 'O').GOOD
+         MNOTE 12,'AN ASSEMBLER LABEL MUST BE SUPPLIED'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The HEADER macro generates a CSECT header with core eye-catcher,    *
+* standard addressability and optional GETVIS for savearea storage:   *
+*                                                                     *
+* label    HEADER <VERSION='vrsn'>                                    *
+*                <,AUTHOR='auth'>                                     *
+*                <,DATE='creadate'>                                   *
+*                <,BASE=<(>b1<,b2<,b3<,b4<,b5>>>)>>                   *
+*                <,SVAREA=<(>savearea<,SVA)>>                         *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        label      is the CSECT name (also for the eye-catcher)      *
+*        vrsn       is a 4-byte version number for the eye-catcher    *
+*        auth       is a 4-byte author name for the eye-catcher       *
+*        creadate   is an 8-byte creation date for the eye-catcher    *
+*        b1 - b5    is up to 5 base register numbers or equated       *
+*                   symbols with register 15 defaulted if omitted     *
+*        savearea   is an optional savearea address (double-word      *
+*                   type) within the CSECT; or a dynamic savearea is  *
+*                   allocated in partition GETVIS (the dynamic area   *
+*                   address is returned in reg. 13) if you specify    *
+*                   this as a length -- using a number/equated-symbol *
+*                   (for lengths up to 4095), half-word address (for  *
+*                   lengths up to 32767), or full-word address        *
+*        SVA        causes a dynamic savearea to be allocated in      *
+*                   system GETVIS                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    ANOP
+&HDRFLG  SETB  1
+&HDRSVA  SETB  0
+         AIF   (T'&BASE(1) NE 'O').LOOP
+&HDRFLG  SETB  0
+         MNOTE 4,'*** WARNING: DEFAULTED TO BASE REGISTER 15 ***'
+         AIF   (T'&SVAREA EQ 'O').DONE
+         MNOTE 12,'MAY NOT SPECIFY ''SVAREA'' WITHOUT ''BASE'''
+         MEXIT
+.LOOP    ANOP
+&SEQ     SETA  &SEQ+1
+         AIF   (T'&BASE(&SEQ) EQ 'O').DONE
+         AIF   (T'&BASE(&SEQ) EQ 'N').LCTR
+         AIF   (T'&BASE(&SEQ) NE 'U').ERR1
+         AIF   ( '&BASE(&SEQ)'(1,1) EQ '''').ERR1
+.LCTR    AIF   (&SEQ GT 5).ERR2
+         AGO   .LOOP
+.ERR1    ANOP
+         MNOTE 12,'BASE(&SEQ) NOT EQUATED SYMBOL OR SELF-DEFINING TERM'
+         MEXIT
+.ERR2    ANOP
+         MNOTE 8,'ONLY FIVE BASE REGISTERS ARE SUPPORTED'
+.DONE    ANOP
+         AIF   (T'&BASE(1) EQ 'O').NOPE
+         MNOTE 0,'*** WARNING: DO NOT USE REGISTER 15 AS BASE ***'
+.NOPE    ANOP
+&LABEL   CSECT      INITIATE CONTROL SECTION
+         USING &LABEL,15               ESTABLISH TEMP BASE REGISTER
+* ------------------------------------------------------------------- *
+         B     HDR&LVL                 SKIP OVER CORE EYE-CATCHER
+         AIF   (T'&BASE(1) EQ 'O').SKIP
+         DROP  15                      DISESTABLISH TEMP BASE REGISTER
+.SKIP    ANOP
+*
+PGMNAME  DC    CL8'&LABEL'             PROGRAM
+.V1      AIF   ('&VERSION'(1,1) EQ '''').V2
+         DC    CL4'&VERSION'           VERSION
+         AGO   .A1
+.V2      ANOP
+         DC    CL4&VERSION             VERSION
+.A1      AIF   ('&AUTHOR'(1,1) EQ '''').A2
+         DC    CL4'&AUTHOR'            AUTHOR
+         AGO   .D1
+.A2      ANOP
+         DC    CL4&AUTHOR              AUTHOR
+.D1      AIF   ('&DATE'(1,1) EQ '''').D2
+         DC    CL8'&DATE'              DATE
+         AGO   .XT
+.D2      ANOP
+         DC    CL8&DATE                DATE
+.XT      ANOP
+*
+HDR&LVL  DS    0H
+         STM   14,12,12(13)            SAVE REGS IN CALLER'S SAVEAREA
+         AIF   (T'&BASE EQ 'O').EXIT
+         LR    &BASE(1),15             LOAD PROGRAM BASE REGISTER
+         USING &LABEL,&BASE(1)         ESTABLISH PERMANENT BASE REG
+         AIF   (T'&BASE(2) EQ 'O').NEXT
+         LA    15,4095                 SET CONSTANT FOR INDEXING
+         LA    &BASE(2),1(15,&BASE(1)) CALCULATE SECOND BASE REG
+         USING &LABEL+4096,&BASE(2)    ESTABLISH SECOND BASE REG
+         AIF   (T'&BASE(3) EQ 'O').NEXT
+         LA    &BASE(3),1(15,&BASE(2)) CALCULATE THIRD BASE REG
+         USING &LABEL+8192,&BASE(3)    ESTABLISH THIRD BASE REG
+         AIF   (T'&BASE(4) EQ 'O').NEXT
+         LA    &BASE(4),1(15,&BASE(3)) CALCULATE FORTH BASE REG
+         USING &LABEL+12288,&BASE(4)   ESTABLISH FORTH BASE REG
+         AIF   (T'&BASE(5) EQ 'O').NEXT
+         LA    &BASE(5),1(15,&BASE(4)) CALCULATE FIFTH BASE REG
+         USING &LABEL+16384,&BASE(5)   ESTABLISH FIFTH BASE REG
+.NEXT    ANOP
+*
+         XR    15,15                   CLEAR RETURN CODE REGISTER
+         ST    15,16(,13)              PUT IN CALLER'S SAVEAREA
+         AIF   (T'&SVAREA EQ 'O').EXIT
+&HDRSVA  SETB  1
+*
+         AIF   (T'&SVAREA(1) EQ 'N' OR T'&SVAREA(1) EQ 'U').GETS
+         AIF   (T'&SVAREA(1) EQ 'H' OR T'&SVAREA(1) EQ 'Y').GETH
+         AIF   (T'&SVAREA(1) EQ 'F' OR T'&SVAREA(1) EQ 'A').GETF
+         AIF   (T'&SVAREA(1) EQ 'D').OK
+         MNOTE 12,'SAVE AREA MUST BE DOUBLE-WORD STORAGE'
+         MEXIT
+.GETS    ANOP
+         LA    0,&SVAREA(1)            SET LENGTH OF DYNAMIC STORAGE
+         AGO   .GET
+.GETH    ANOP
+         LH    0,&SVAREA(1)            GET LENGTH OF DYNAMIC STORAGE
+         AGO   .GET
+.GETF    ANOP
+         L     0,&SVAREA(1)            GET LENGTH OF DYNAMIC STORAGE
+.GET     ANOP
+         AIF   ('&SVAREA(2)' EQ 'SVA').SVA
+         GETVIS SVA=NO                 OBTAIN DYNAMIC STORAGE AREA
+         AGO   .CHK
+.SVA     ANOP
+         GETVIS SVA=YES                OBTAIN DYNAMIC STORAGE AREA
+.CHK     ANOP
+         IF    15,(NZERO,LTR),15       IF UNABLE TO OBTAIN STORAGE
+          CANCEL ALL                    CANCEL THE PROGRAM
+         ENDIF
+         LR    15,1                    GET ADDRESS OF DYNAMIC STORAGE
+         LM    0,1,20(13)              RESTORE REGS 0 & 1 FROM CALLER
+         AGO   .GO
+.OK      ANOP
+         LA    15,&SVAREA(1)           LOAD ADDRESS OF MY SAVEAREA
+.GO      ANOP
+         ST    15,8(,13)               SET NEXT SAVEAREA IN CALLER'S
+         ST    13,4(,15)               SET PREV SAVEAREA IN MINE
+         LR    13,15                   LOAD REG WITH MY SAVEAREA ADDR
+*
+         XR    15,15                   CLEAR RETURN CODE REGISTER
+.EXIT    ANOP
+* ------------------------------------------------------------------- *
+         MEND

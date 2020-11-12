@@ -1,0 +1,126 @@
+         MACRO
+&LABEL   TRAILER &RETCODE=0,&SVAREA=
+         GBLB  &HDRFLG,&HDRSVA
+         AIF   (&HDRFLG OR T'&SVAREA(1) EQ 'O').CHECK
+         MNOTE 12,'''SVAREA'' NOT ALLOWED WITHOUT ''BASE'' IN HEADER'
+         MEXIT
+.CHECK   AIF   (NOT &HDRSVA).GOOD
+         AIF   (T'&SVAREA(1) NE 'O').GOOD
+         MNOTE 12,'''SVAREA'' REQUIRED IN TRAILER WHEN IN HEADER'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The TRAILER macro generates a CSECT trailer with standard return    *
+* code conventions and optional FREEVIS for dynamic saveareas:        *
+*                                                                     *
+* <label>  TRAILER <RETCODE=<(>retcode<,reg0<,reg1>)>>                *
+*                <,SVAREA=<(>savearea<,SVA)>>                         *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        retcode    is an optional return code address (full- or      *
+*                   half-word), return code value (specified as a     *
+*                   number) or return code register (specified as an  *
+*                   equated symbol) to return in reg15 to the caller  *
+*        reg0                                                         *
+*        reg1       is an optional return value address (full- or     *
+*                   half-word), return value literal (specified as a  *
+*                   number) or return value register (specified as an *
+*                   equated symbol) to go in the caller's registers;  *
+*        savearea   is an optional savearea address (double-word      *
+*                   type) within the CSECT; or a dynamic savearea is  *
+*                   released from partition GETVIS if you specify     *
+*                   this as a length -- using a number, equated       *
+*                   symbol, or address (half- or full-word)           *
+*        SVA        causes a dynamic savearea to be released          *
+*                   from system GETVIS                                *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    ANOP
+&LABEL   DS    0H   TERMINATE CONTROL SECTION
+         AIF   (T'&SVAREA(1) EQ 'O').RCF
+         AIF   (T'&SVAREA(1) EQ 'D').RCF
+         LR    2,13                    SETUP FOR FREEVIS
+.RCF     AIF   (T'&RETCODE(1) NE 'F').RCH
+         L     15,&RETCODE(1)          GET FULL-WORD RETURN CODE VALUE
+         AGO   .NEXT
+.RCH     AIF   (T'&RETCODE(1) NE 'H').RCA
+         LH    15,&RETCODE(1)          GET HALF-WORD RETURN CODE VALUE
+         AGO   .NEXT
+.RCA     AIF   (T'&RETCODE(1) NE 'N').RCR
+         LA    15,&RETCODE(1)          GET NUMERIC RETURN CODE VALUE
+         AGO   .NEXT
+.RCR     AIF   (T'&RETCODE(1) NE 'U').RCX
+         LR    15,&RETCODE(1)          GET EQUATED RETURN CODE REGISTER
+         AGO   .NEXT
+.RCX     ANOP
+         MNOTE 12,'''RETCODE(1)'' VALUE TYPE IS UNKNOWN'
+.NEXT    ANOP
+         AIF   (T'&SVAREA(1) EQ 'O').SKIP
+         L     13,4(,13)               GET ADDRESS OF CALLER'S SAVEAREA
+.SKIP    ANOP
+         ST    15,16(,13)              SAVE RETURN CODE IN REG 15 LOC
+.R0      AIF   (T'&RETCODE(2) EQ 'O').R1
+         AIF   (T'&RETCODE(2) NE 'F').R0H
+         L     0,&RETCODE(2)           GET FULL-WORD RETURN VALUE
+         AGO   .R0N
+.R0H     AIF   (T'&RETCODE(2) NE 'H').R0A
+         LH    0,&RETCODE(2)           GET HALF-WORD RETURN VALUE
+         AGO   .R0N
+.R0A     AIF   (T'&RETCODE(2) NE 'N').R0R
+         LA    0,&RETCODE(2)           GET NUMERIC RETURN VALUE
+         AGO   .R0N
+.R0R     AIF   (T'&RETCODE(2) NE 'U').R0X
+         LR    0,&RETCODE(2)           GET EQUATED RETURN REGISTER
+         AGO   .R0N
+.R0X     ANOP
+         MNOTE 12,'''RETCODE(2)'' VALUE TYPE IS UNKNOWN'
+.R0N     ANOP
+         ST    0,20(,13)               SAVE RETURN CODE IN REG 15 LOC
+.R1      AIF   (T'&RETCODE(3) EQ 'O').RX
+         AIF   (T'&RETCODE(3) NE 'F').R1H
+         L     1,&RETCODE(3)           GET FULL-WORD RETURN VALUE
+         AGO   .R2N
+.R1H     AIF   (T'&RETCODE(3) NE 'H').R1A
+         LH    1,&RETCODE(3)           GET HALF-WORD RETURN VALUE
+         AGO   .R2N
+.R1A     AIF   (T'&RETCODE(3) NE 'N').R1R
+         LA    1,&RETCODE(3)           GET NUMERIC RETURN VALUE
+         AGO   .R2N
+.R1R     AIF   (T'&RETCODE(3) NE 'U').R1X
+         LR    1,&RETCODE(3)           GET EQUATED RETURN REGISTER
+         AGO   .R2N
+.R1X     ANOP
+         MNOTE 12,'''RETCODE(3)'' VALUE TYPE IS UNKNOWN'
+.R1N     ANOP
+         ST    1,24(,13)               SAVE RETURN CODE IN REG 15 LOC
+.RX      ANOP
+         AIF   (T'&SVAREA(1) EQ 'O').EXIT
+         AIF   (T'&SVAREA(1) EQ 'D').EXIT
+*
+         LR    1,2                     CONTINUE WITH FREEVIS
+         AIF   (T'&SVAREA(1) EQ 'N' OR T'&SVAREA(1) EQ 'U').GETS
+         AIF   (T'&SVAREA(1) EQ 'H' OR T'&SVAREA(1) EQ 'Y').GETH
+         AIF   (T'&SVAREA(1) EQ 'F' OR T'&SVAREA(1) EQ 'A').GETF
+         MNOTE 12,'SAVE AREA MUST BE DOUBLE-WORD STORAGE'
+         MEXIT
+.GETS    ANOP
+         LA    0,&SVAREA(1)            SET LENGTH OF DYNAMIC STORAGE
+         AGO   .FREE
+.GETH    ANOP
+         LH    0,&SVAREA(1)            GET LENGTH OF DYNAMIC STORAGE
+         AGO   .FREE
+.GETF    ANOP
+         L     0,&SVAREA(1)            GET LENGTH OF DYNAMIC STORAGE
+.FREE    AIF   ('&SVAREA(2)' EQ 'SVA').SVA
+         FREEVIS SVA=NO                RELEASE DYNAMIC STORAGE AREA
+         AGO   .CHK
+.SVA     ANOP
+         FREEVIS SVA=YES               RELEASE DYNAMIC STORAGE AREA
+.CHK     ANOP
+         IF    15,(NZERO,LTR),15       IF UNABLE TO RELEASE STORAGE
+          CANCEL ALL                    CANCEL THE PROGRAM
+         ENDIF
+*
+.EXIT    ANOP
+         LM    14,12,12(13)            RESTORE CALLER'S REGISTERS
+         BR    14                      RETURN TO CALLER
+* ------------------------------------------------------------------- *
+         MEND

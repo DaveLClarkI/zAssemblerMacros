@@ -1,0 +1,139 @@
+   BKEND
+         MACRO
+&LBLNAME WHILE &A,&T,&B,&CONN,&C,&S,&D,&BAD
+         GBLA  &WHLVL,&WHSEQ(5)
+         GBLC  &WHNDX(5)
+         LCLC  &LVL,&X
+         AIF   (T'&BAD EQ 'O').GOOD
+         MNOTE 12,'TOO MANY OPERANDS IN ''WHILE'' STATEMENT'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The WHILE construct utilizes the following format:                  *
+*                                                                     *
+* <label>  WHILE expression<,{AND!OR},expression>                     *
+*          <WEXIT>                                                    *
+*          <WLOOP>                                                    *
+*          WEND                                                       *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        '{!}'      encloses mutually exclusive operands              *
+*        expression form:  oper,(cond<,instr<,mask>>),oper            *
+*                   where: oper  are the testing operands             *
+*                          '()'  optional, if only "cond" is coded    *
+*                          cond  is the testing condition desired     *
+*                                (e.g. 'E', 'NE', 'H', 'NH', etc.)    *
+*                          instr is the testing instruction desired   *
+*                                (defaults to 'CLI' if omitted)       *
+*                          mask  is the testing mask (if needed)      *
+*        'AND!OR'   Boolean conector for double condition testing     *
+*                                                                     *
+* Note: Up to 5 levels of nesting are currently supported.            *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    AIF   (&WHLVL LT 5).NEST
+         MNOTE 12,'NESTING ERROR IN ''WHILE'' PROCESSING'
+         MEXIT
+.NEST    ANOP
+&WHLVL   SETA  &WHLVL+1
+         MNOTE *,'''WHILE'' NESTING AT LEVEL &WHLVL'
+&WHSEQ(&WHLVL) SETA 1
+&WHNDX(&WHLVL) SETC '&SYSNDX'
+&LVL     SETC  '&WHNDX(&WHLVL)'
+* ------------------------------------------------------------------- *
+WHIL&LVL DS    0H
+         AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1
+         MNOTE 12,'MISSING OPERAND(S) IN ''WHILE'' STATEMENT'
+         MEXIT
+.OK1     AIF   (T'&T(2) NE 'O').TST1
+&LBLNAME CLI   &A,&B
+         AGO   .CHK1
+.TST1    AIF   (T'&T(3) NE 'O').TST1M
+&LBLNAME &T(2) &A,&B
+         AGO   .CHK1
+.TST1M   ANOP
+&LBLNAME &T(2) &A,&T(3),&B
+.CHK1    AIF   ('&CONN' EQ 'OR' ).OR
+&X       SETC  'N'.'&T(1)'(1,1)
+         AIF   ('&T(1)'(1,1) NE 'N').CHK1N
+&X       SETC  '&T(1)'(2,1)
+.CHK1N   ANOP
+         B&X   WEND&SYSNDX
+         AGO   .NEXT
+* ------------------------------------------------------------------- *
+.OR      ANOP
+&X       SETC  '&T(1)'(1,1)
+         AIF   ('&X' NE 'N').ORN
+&X       SETC  '&T(1)'(1,2)
+.ORN     ANOP
+         B&X   WHDO&SYSNDX
+         AGO   .AND
+* ------------------------------------------------------------------- *
+.NEXT    AIF   (T'&CONN EQ 'O').EXIT
+         AIF   ('&CONN' EQ 'AND').AND
+         MNOTE 8,'UNKNOWN CONNECTOR ''&CONN'' IN ''WHILE'' STATEMENT'
+         AGO   .EXIT
+* ------------------------------------------------------------------- *
+.AND     AIF   (T'&C NE 'O' AND T'&S NE 'O' AND T'&D NE 'O').OK2
+         MNOTE 8,'MISSING OPERAND(S) IN ''WHILE'' STATEMENT'
+         AGO   .EXIT
+.OK2     AIF   (T'&S(2) NE 'O').TST2
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2    AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2M   ANOP
+         &S(2) &C,&S(3),&D
+.CHK2    ANOP
+&X       SETC  'N'.'&S(1)'(1,1)
+         AIF   ('&S(1)'(1,1) NE 'N').CHK2N
+&X       SETC  '&S(1)'(2,1)
+.CHK2N   ANOP
+         B&X   WEND&SYSNDX
+         AGO   .EXIT
+* ------------------------------------------------------------------- *
+.EXIT    ANOP
+WHDO&LVL DS    0H
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         WLOOP
+         GBLA  &WHLVL,&WHSEQ(5)
+         GBLC  &WHNDX(5)
+         AIF   (&WHSEQ(&WHLVL) EQ 1).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''WHILE'' PROCESSING'
+         MEXIT
+.OK      ANOP
+* ------------------------------------------------------------------- *
+         B     WHIL&WHNDX(&WHLVL)
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         WEXIT
+         GBLA  &WHLVL,&WHSEQ(5)
+         GBLC  &WHNDX(5)
+         AIF   (&WHSEQ(&WHLVL) EQ 1).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''WHILE'' PROCESSING'
+         MEXIT
+.OK      ANOP
+* ------------------------------------------------------------------- *
+         B     WEND&WHNDX(&WHLVL)
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         WEND
+         GBLA  &WHLVL,&WHSEQ(5)
+         GBLC  &WHNDX(5)
+         LCLC  &LVL
+         AIF   (&WHSEQ(&WHLVL) EQ 1).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''WHILE'' PROCESSING'
+         MEXIT
+.OK      ANOP
+&LVL     SETC  '&WHNDX(&WHLVL)'
+* ------------------------------------------------------------------- *
+         B     WHIL&LVL
+WEND&LVL DS    0H
+&WHSEQ(&WHLVL) SETA &WHSEQ(&WHLVL)+1
+* ------------------------------------------------------------------- *
+&WHLVL   SETA  &WHLVL-1
+         MEND
+   BKEND

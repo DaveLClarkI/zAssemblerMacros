@@ -1,0 +1,143 @@
+   BKEND
+         MACRO
+&LBLNAME SELECT
+         GBLA  &SLSEQ
+         GBLC  &SLNDX
+         AIF   (&SLSEQ LT 1).OK
+         AIF   (&SLSEQ LT 99).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''SELECT'' PROCESSING'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The SELECT construct utilizes the following format (no nesting):    *
+*                                                                     *
+* <label>  SELECT                                                     *
+*          CASE  expression<,{AND|OR},expression>                     *
+*          ...                                                        *
+*         <CASE  ELSE>                                                *
+*          ENDSL                                                      *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        '{|}'      encloses mutually exclusive operands              *
+*        expression form:  oper,(cond<,instr<,mask>>),oper            *
+*                   where: oper  are the testing operands             *
+*                          '()'  optional, if only "cond" is coded    *
+*                          cond  is the testing condition desired     *
+*                                (e.g. 'E', 'NE', 'H', 'NH', etc.)    *
+*                          instr is the testing instruction desired   *
+*                                (defaults to 'CLI' if omitted)       *
+*                          mask  is the testing mask (if needed)      *
+*        'AND|OR'   Boolean conector for double condition testing     *
+*                                                                     *
+* Note: Up to 98 CASE statements are allowed (or 97 plus CASE ELSE).  *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.OK      ANOP
+&LBLNAME DS    0H
+&SLSEQ   SETA  1
+&SLNDX   SETC  '&SYSNDX'
+         MEND
+ 
+         MACRO
+         CASE  &A,&T,&B,&CONN,&C,&S,&D,&BAD
+         GBLA  &SLSEQ
+         GBLC  &SLNDX
+         LCLC  &LVL,&N,&Q,&X
+         AIF   (&SLSEQ LT 1).ERROR
+         AIF   (&SLSEQ LT 99).OK
+.ERROR   MNOTE 12,'SEQUENCE ERROR IN ''SELECT'' PROCESSING'
+         MEXIT
+.OK      AIF   (T'&BAD EQ 'O').GOOD
+         MNOTE 12,'TOO MANY OPERANDS IN ''CASE'' STATEMENT'
+         MEXIT
+.GOOD    AIF   ('&A' NE 'ELSE').GO
+         AIF   (T'&T EQ 'O').GO
+         MNOTE 12,'TOO MANY OPERANDS ON ''CASE ELSE'' STATEMENT'
+         MEXIT
+.GO      ANOP
+&LVL     SETC  '&SLNDX'
+&Q       SETC  '&SLSEQ'
+* ------------------------------------------------------------------- *
+         AIF   (&SLSEQ EQ 1).BYPASS
+         B     SL&LVL.99
+.BYPASS  ANOP
+&SLSEQ   SETA  &SLSEQ+1
+&N       SETC  '&SLSEQ'
+SL&LVL&Q DS    0H
+         AIF   ('&A' EQ 'ELSE').EXIT
+         AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1
+         MNOTE 12,'MISSING OPERAND(S) IN ''CASE'' STATEMENT'
+         MEXIT
+.OK1     AIF   (T'&T(2) NE 'O').TST1
+         CLI   &A,&B
+         AGO   .CHK1
+.TST1    AIF   (T'&T(3) NE 'O').TST1M
+         &T(2) &A,&B
+         AGO   .CHK1
+.TST1M   ANOP
+         &T(2) &A,&T(3),&B
+.CHK1    AIF   ('&CONN' EQ 'OR' ).OR
+&X       SETC  'N'.'&T(1)'(1,1)
+         AIF   ('&T(1)'(1,1) NE 'N').CHK1N
+&X       SETC  '&T(1)'(2,1)
+.CHK1N   ANOP
+         B&X   SL&LVL&N
+         AGO   .NEXT
+* ------------------------------------------------------------------- *
+.OR      ANOP
+&X       SETC  '&T(1)'(1,1)
+         AIF   ('&X' NE 'N').ORN
+&X       SETC  '&T(1)'(1,2)
+.ORN     ANOP
+         B&X   DO&LVL&Q
+         AGO   .AND
+* ------------------------------------------------------------------- *
+.NEXT    AIF   (T'&CONN EQ 'O').EXIT
+         AIF   ('&CONN' EQ 'AND').AND
+         MNOTE 8,'UNKNOWN CONNECTOR ''&CONN'' IN ''CASE'' STATEMENT'
+         AGO   .EXIT
+* ------------------------------------------------------------------- *
+.AND     AIF   (T'&C NE 'O' AND T'&S NE 'O' AND T'&D NE 'O').OK2
+         MNOTE 8,'MISSING OPERAND(S) IN ''CASE'' STATEMENT'
+         AGO   .EXIT
+.OK2     AIF   (T'&S(2) NE 'O').TST2
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2    AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2M   ANOP
+         &S(2) &C,&S(3),&D
+.CHK2    ANOP
+&X       SETC  'N'.'&S(1)'(1,1)
+         AIF   ('&S(1)'(1,1) NE 'N').CHK2N
+&X       SETC  '&S(1)'(2,1)
+.CHK2N   ANOP
+         B&X   SL&LVL&N
+         AGO   .EXIT
+* ------------------------------------------------------------------- *
+.EXIT    ANOP
+DO&LVL&Q DS    0H
+* ------------------------------------------------------------------- *
+         MEND
+ 
+         MACRO
+         ENDSL
+         GBLA  &SLSEQ
+         GBLC  &SLNDX
+         LCLC  &LVL,&Q
+         AIF   (&SLSEQ GT 0).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''SELECT'' PROCESSING'
+         MEXIT
+.OK      ANOP
+&LVL     SETC  '&SLNDX'
+&Q       SETC  '&SLSEQ'
+* ------------------------------------------------------------------- *
+         AIF   (&SLSEQ EQ 99).BYPASS
+SL&LVL&Q DS    0H
+&SLSEQ   SETA  99
+&Q       SETC  '&SLSEQ'
+.BYPASS  ANOP
+SL&LVL&Q DS    0H
+* ------------------------------------------------------------------- *
+&SLSEQ   SETA  0
+         MEND
+   BKEND

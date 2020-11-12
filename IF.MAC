@@ -1,0 +1,256 @@
+         MACRO                                                                  
+&LBLNAME IF    &A,&T,&B,&CONN,&C,&S,&D,&BAD                                     
+         GBLA  &IFLVL,&IFSEQ(8)                                                 
+         GBLC  &IFNDX(8)                                                        
+         LCLC  &LVL,&X,&B1,&D1                                                  
+         AIF   (T'&BAD EQ 'O').GOOD                                             
+         MNOTE 12,'TOO MANY OPERANDS IN ''IF'' STATEMENT'                       
+         MEXIT                                                                  
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+* The IF construct utilizes one of the following two formats:         *         
+*                                                                     *         
+* <label>  IF    expression<,{BC|BCR},bdest<,bcond,bdest>>            *         
+*          ENDIF                                                      *         
+*                                                                     *         
+* <label>  IF    expression<,{AND|OR},expression>                     *         
+*         <AND   expression<,AND,expression>>                         *         
+*          ...                                                        *         
+*         <ELSE>                                                      *         
+*          ENDIF                                                      *         
+*                                                                     *         
+* Where: '<>'       encloses optional operands                        *         
+*        '{|}'      encloses mutually exclusive operands              *         
+*        expression form:  oper,(cond<,instr<,mask>>),oper            *         
+*                   where: oper  are the operands to be tested (which *         
+*                                may be $NOOP where applicable)       *         
+*                          '()'  optional, if only "cond" is coded    *         
+*                          cond  is the testing condition desired     *         
+*                                (e.g. 'E', 'NE', 'H', 'NH', etc.)    *         
+*                          instr is the testing instruction desired   *         
+*                                (defaults to 'CLI' if omitted)       *         
+*                          mask  is the testing mask (if needed)      *         
+*        'BC|BCR'   modify the default branch destination if the      *         
+*                   expression evaluates "TRUE"                       *         
+*        bdest      branch destination address or register            *         
+*        bcond      branch condition instruction (in addition to      *         
+*                   "expression" condition) using extended mnemonics  *         
+*        'AND|OR'   Boolean conector for double condition testing     *         
+*                   (the IF macro's OR option should not be used      *         
+*                    in combination with the use of the AND macro)    *         
+*                                                                     *         
+* Note: Up to 8 levels of nesting are currently supported.            *         
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+.GOOD    AIF   (&IFLVL LT 8).NEST                                               
+         MNOTE 12,'NESTING ERROR IN ''IF'' PROCESSING'                          
+         MEXIT                                                                  
+.NEST    ANOP                                                                   
+&IFLVL   SETA  &IFLVL+1                                                         
+         MNOTE *,'''IF'' NESTING AT LEVEL &IFLVL'                               
+&IFSEQ(&IFLVL) SETA 1                                                           
+&IFNDX(&IFLVL) SETC '&SYSNDX'                                                   
+&LVL     SETC  '&IFNDX(&IFLVL)'                                                 
+* ------------------------------------------------------------------- *         
+IF&LVL   DS    0H                                                               
+         AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1                
+         MNOTE 12,'MISSING OPERAND(S) IN ''IF'' STATEMENT'                      
+         MEXIT                                                                  
+.OK1     ANOP                                                                   
+&B1      SETC  ''                                                               
+         AIF   ('&A' EQ '$NOOP').CHK1                                           
+&B1      SETC  ','.'&B'                                                         
+         AIF   ('&B' NE '$NOOP').OK1X                                           
+&B1      SETC  ''                                                               
+.OK1X    ANOP                                                                   
+         AIF   (T'&T(2) NE 'O').TST1                                            
+&LBLNAME CLI   &A.&B1                                                           
+         AGO   .CHK1                                                            
+.TST1    AIF   (T'&T(3) NE 'O').TST1M                                           
+&LBLNAME &T(2) &A.&B1                                                           
+         AGO   .CHK1                                                            
+.TST1M   ANOP                                                                   
+&LBLNAME &T(2) &A,&T(3).&B1                                                     
+.CHK1    AIF   ('&CONN' EQ 'OR' ).OR                                            
+         AIF   ('&CONN' EQ 'BC' OR '&CONN' EQ 'BCR').BC                         
+&X       SETC  'N'.'&T(1)'(1,1)                                                 
+         AIF   ('&T(1)'(1,1) NE 'N').CHK1N                                      
+&X       SETC  '&T(1)'(2,1)                                                     
+.CHK1N   ANOP                                                                   
+         B&X   ELSE&SYSNDX                                                      
+         AGO   .NEXT                                                            
+* ------------------------------------------------------------------- *         
+.BC      AIF   (T'&S EQ 'O').OR                                                 
+         AIF   ('&S' EQ 'B'   OR '&S' EQ 'BR'  ).OR                             
+         AIF   ('&S' EQ 'BE'  OR '&S' EQ 'BER' ).OR                             
+         AIF   ('&S' EQ 'BH'  OR '&S' EQ 'BHR' ).OR                             
+         AIF   ('&S' EQ 'BL'  OR '&S' EQ 'BLR' ).OR                             
+         AIF   ('&S' EQ 'BM'  OR '&S' EQ 'BMR' ).OR                             
+         AIF   ('&S' EQ 'BNE' OR '&S' EQ 'BNER').OR                             
+         AIF   ('&S' EQ 'BNH' OR '&S' EQ 'BNHR').OR                             
+         AIF   ('&S' EQ 'BNL' OR '&S' EQ 'BNLR').OR                             
+         AIF   ('&S' EQ 'BNM' OR '&S' EQ 'BNMR').OR                             
+         AIF   ('&S' EQ 'BNO' OR '&S' EQ 'BNOR').OR                             
+         AIF   ('&S' EQ 'BNP' OR '&S' EQ 'BNPR').OR                             
+         AIF   ('&S' EQ 'BNZ' OR '&S' EQ 'BNZR').OR                             
+         AIF   ('&S' EQ 'BO'  OR '&S' EQ 'BOR' ).OR                             
+         AIF   ('&S' EQ 'BP'  OR '&S' EQ 'BPR' ).OR                             
+         AIF   ('&S' EQ 'BZ'  OR '&S' EQ 'BZR' ).OR                             
+         MNOTE 8,'UNKNOWN CONDITION ''&S'' IN ''IF'' STATEMENT'                 
+* ------------------------------------------------------------------- *         
+.OR      ANOP                                                                   
+&X       SETC  '&T(1)'(1,1)                                                     
+         AIF   ('&X' NE 'N').ORN                                                
+&X       SETC  '&T(1)'(1,2)                                                     
+.ORN     AIF   ('&CONN' EQ 'BC' ).ORB                                           
+         AIF   ('&CONN' EQ 'BCR').ORBR                                          
+         B&X   THEN&SYSNDX                                                      
+         AGO   .AND                                                             
+.ORBR    ANOP                                                                   
+&X       SETC  '&X'.'R'                                                         
+.ORB     ANOP                                                                   
+         B&X   &C                                                               
+         AIF   (T'&S EQ 'O' OR T'&D EQ 'O' ).EXIT                               
+         &S    &D                                                               
+         AGO   .EXIT                                                            
+* ------------------------------------------------------------------- *         
+.NEXT    AIF   (T'&CONN EQ 'O').EXIT                                            
+         AIF   ('&CONN' EQ 'AND').AND                                           
+         MNOTE 8,'UNKNOWN CONNECTOR ''&CONN'' IN ''IF'' STATEMENT'              
+         AGO   .EXIT                                                            
+* ------------------------------------------------------------------- *         
+.AND     AIF   (T'&C NE 'O' AND T'&S NE 'O' AND T'&D NE 'O').OK2                
+         MNOTE 8,'MISSING OPERAND(S) IN ''IF'' STATEMENT'                       
+         AGO   .EXIT                                                            
+.OK2     ANOP                                                                   
+&D1      SETC  ''                                                               
+         AIF   ('&C' EQ '$NOOP').CHK2                                           
+&D1      SETC  ','.'&D'                                                         
+         AIF   ('&D' NE '$NOOP').OK2X                                           
+&D1      SETC  ''                                                               
+.OK2X    ANOP                                                                   
+         AIF   (T'&S(2) NE 'O').TST2                                            
+         CLI   &C.&D1                                                           
+         AGO   .CHK2                                                            
+.TST2    AIF   (T'&S(3) NE 'O').TST2M                                           
+         &S(2) &C.&D1                                                           
+         AGO   .CHK2                                                            
+.TST2M   ANOP                                                                   
+         &S(2) &C,&S(3).&D1                                                     
+.CHK2    ANOP                                                                   
+&X       SETC  'N'.'&S(1)'(1,1)                                                 
+         AIF   ('&S(1)'(1,1) NE 'N').CHK2N                                      
+&X       SETC  '&S(1)'(2,1)                                                     
+.CHK2N   ANOP                                                                   
+         B&X   ELSE&SYSNDX                                                      
+         AGO   .EXIT                                                            
+* ------------------------------------------------------------------- *         
+.EXIT    ANOP                                                                   
+THEN&LVL DS    0H                                                               
+* ------------------------------------------------------------------- *         
+         MEND                                                                   
+         MACRO                                                                  
+         AND   &A,&T,&B,&CONN,&C,&S,&D,&BAD                                     
+         GBLA  &IFLVL,&IFSEQ(8)                                                 
+         GBLC  &IFNDX(8)                                                        
+         LCLC  &LVL,&X                                                          
+         AIF   (T'&BAD EQ 'O').GOOD                                             
+         MNOTE 12,'TOO MANY OPERANDS IN ''AND'' STATEMENT'                      
+         MEXIT                                                                  
+.GOOD    AIF   (&IFSEQ(&IFLVL) EQ 1).OK                                         
+         MNOTE 12,'SEQUENCE ERROR IN ''IF'' PROCESSING'                         
+         MEXIT                                                                  
+.OK      ANOP                                                                   
+&LVL     SETC  '&IFNDX(&IFLVL)'                                                 
+* ------------------------------------------------------------------- *         
+         AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1                
+         MNOTE 12,'MISSING OPERAND(S) IN ''AND'' STATEMENT'                     
+         MEXIT                                                                  
+.OK1     AIF   (T'&T(2) NE 'O').TST1                                            
+         CLI   &A,&B                                                            
+         AGO   .CHK1                                                            
+.TST1    AIF   (T'&T(3) NE 'O').TST1M                                           
+         &T(2) &A,&B                                                            
+         AGO   .CHK1                                                            
+.TST1M   ANOP                                                                   
+         &T(2) &A,&T(3),&B                                                      
+.CHK1    ANOP                                                                   
+&X       SETC  'N'.'&T(1)'(1,1)                                                 
+         AIF   ('&T(1)'(1,1) NE 'N').CHK1N                                      
+&X       SETC  '&T(1)'(2,1)                                                     
+.CHK1N   ANOP                                                                   
+         B&X   ELSE&LVL                                                         
+         AGO   .NEXT                                                            
+* ------------------------------------------------------------------- *         
+.NEXT    AIF   (T'&CONN EQ 'O').EXIT                                            
+         AIF   ('&CONN' EQ 'AND').AND                                           
+         MNOTE 8,'UNKNOWN CONNECTOR ''&CONN'' IN ''AND'' STATEMENT'             
+         AGO   .EXIT                                                            
+* ------------------------------------------------------------------- *         
+.AND     AIF   (T'&C NE 'O' AND T'&S NE 'O' AND T'&D NE 'O').OK2                
+         MNOTE 8,'MISSING OPERAND(S) IN ''AND'' STATEMENT'                      
+         AGO   .EXIT                                                            
+.OK2     AIF   (T'&S(2) NE 'O').TST2                                            
+         CLI   &C,&D                                                            
+         AGO   .CHK2                                                            
+.TST2    AIF   (T'&S(3) NE 'O').TST2M                                           
+         &S(2) &C,&D                                                            
+         AGO   .CHK2                                                            
+.TST2M   ANOP                                                                   
+         &S(2) &C,&S(3),&D                                                      
+.CHK2    ANOP                                                                   
+&X       SETC  'N'.'&S(1)'(1,1)                                                 
+         AIF   ('&S(1)'(1,1) NE 'N').CHK2N                                      
+&X       SETC  '&S(1)'(2,1)                                                     
+.CHK2N   ANOP                                                                   
+         B&X   ELSE&LVL                                                         
+         AGO   .EXIT                                                            
+* ------------------------------------------------------------------- *         
+.EXIT    ANOP                                                                   
+* ------------------------------------------------------------------- *         
+         MEND                                                                   
+         MACRO                                                                  
+         ELSE                                                                   
+         GBLA  &IFLVL,&IFSEQ(8)                                                 
+         GBLC  &IFNDX(8)                                                        
+         LCLC  &LVL                                                             
+         AIF   (&IFSEQ(&IFLVL) EQ 1).OK                                         
+         MNOTE 12,'SEQUENCE ERROR IN ''IF'' PROCESSING'                         
+         MEXIT                                                                  
+.OK      ANOP                                                                   
+&LVL     SETC  '&IFNDX(&IFLVL)'                                                 
+* ------------------------------------------------------------------- *         
+         B     ENDF&LVL                                                         
+ELSE&LVL DS    0H                                                               
+&IFSEQ(&IFLVL) SETA &IFSEQ(&IFLVL)+1                                            
+* ------------------------------------------------------------------- *         
+         MEND                                                                   
+         MACRO                                                                  
+         ENDIF                                                                  
+         GBLA  &IFLVL,&IFSEQ(8)                                                 
+         GBLC  &IFNDX(8)                                                        
+         LCLC  &LVL                                                             
+         AIF   (&IFSEQ(&IFLVL) LT 1).ERROR                                      
+         AIF   (&IFSEQ(&IFLVL) LT 3).OK                                         
+.ERROR   MNOTE 12,'SEQUENCE ERROR IN ''IF'' PROCESSING'                         
+         MEXIT                                                                  
+.OK      ANOP                                                                   
+&LVL     SETC  '&IFNDX(&IFLVL)'                                                 
+* ------------------------------------------------------------------- *         
+         AIF   (&IFSEQ(&IFLVL) EQ 2).ELSE                                       
+ELSE&LVL DS    0H                                                               
+&IFSEQ(&IFLVL) SETA &IFSEQ(&IFLVL)+1                                            
+* ------------------------------------------------------------------- *         
+.ELSE    ANOP                                                                   
+ENDF&LVL DS    0H                                                               
+&IFSEQ(&IFLVL) SETA &IFSEQ(&IFLVL)+1                                            
+* ------------------------------------------------------------------- *         
+&IFLVL   SETA  &IFLVL-1                                                         
+         MEND                                                                   
+* simulated branch to label mnemonics                                           
+         MACRO                                                                  
+&LBLNAME BK    &DEST                                                            
+&LBLNAME BC    3,&DEST            branch on carry                               
+         MEND                                                                   
+         MACRO                                                                  
+&LBLNAME BNK   &DEST                                                            
+&LBLNAME BC    12,&DEST           branch on no carry                            
+         MEND                                                                   

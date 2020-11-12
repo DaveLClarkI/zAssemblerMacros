@@ -1,0 +1,348 @@
+         MACRO
+&LBLNAME SFE   &ROW,&COL,&ATR=,&CLR=,&HLT=,&RA=,&WDT=80
+         GBLA  &ARG                3270 ATTRIBUTE CHAR RESOLUTION       01800000
+         GBLB  &IC                 ATR = IC                             04200000
+         GBLB  &OPTS(8)            MAP DESCRIPTOR FLAGS                 02400000
+         LCLA  A1,A2,T
+         LCLC  C1,C2,FLDA,FLDC,FLDH,HEX3270,LBL,RAC,STR
+         AGO   .BEGIN
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* Macro: SFE        Code Created 09/20/2005   By Dave Clark           *
+*                   Last Revised 03/23/2007                           *
+*                                                                     *
+*      This macro generates specified combinations of the Set-Buffer- *
+* Address (SBA),  Repeat-to-Address  (RA),  Start-Field (SF),  Start- *
+* Field-Extended (SFE), Set-Attribute (SA), and/or Insert-Cursor (IC) *
+* 3270 buffer orders utilizing the following syntax:                  *
+*                                                                     *
+* <label>  SFE   <row,column,><ATR=(same-as-for-BMS-field-ATTRB)>     *
+*                <,CLR={Def|Blue|Red|Pink|Green|Turq|Yellow|White}>   *
+*                <,HLT={Def|Blink|Reverse|Underline}>                 *
+*                <,RA=character-to-repeat>                            *
+*                <,WDT={80|width}>                                    *
+*                                                                     *
+* Where: <>       encloses optional operands;                         *
+*                                                                     *
+*        {|}      encloses mutually exclusive values;                 *
+*                                                                     *
+*        row                                                          *
+*        column   are the optional 1-based row and column numbers for *
+*                 specifying a screen position (i.e., both are        *
+*                 absolute screen positions -- and not offsets);      *
+*                                                                     *
+*        ASKIP|PROT|UNPROT                                            *
+*        NORM|BRT|DRK                                                 *
+*        DET                                                          *
+*        NUM                                                          *
+*        FSET                                                         *
+*        IC       are the field attribute(s) to be used (the ATR=     *
+*                 operand is optional when either CLR= or HLT= is     *
+*                 specified);                                         *
+*                                                                     *
+*        Default                                                      *
+*        Normal                                                       *
+*        Blue                                                         *
+*        Red                                                          *
+*        Pink                                                         *
+*        Green                                                        *
+*        Turquoise                                                    *
+*        Yellow                                                       *
+*        White    is the optional extended color attribute -- only    *
+*                 the first character, of which, is examined;         *
+*                                                                     *
+*        Default                                                      *
+*        Normal                                                       *
+*        Blink                                                        *
+*        Reverse                                                      *
+*        Underline is the optional extended hilight attribute -- only *
+*                 the first character, of which, is examined;         *
+*                                                                     *
+*        RA       is for requesting the Repeat-to-Address (RA) buffer *
+*                 order when specifying a screen position (the speci- *
+*                 fied 1-digit character or 2-digit hex character is  *
+*                 repeated); and,                                     *
+*                                                                     *
+*        width    is the screen width, in columns (if omitted, the    *
+*                 default of 80 columns is used).                     *
+*                                                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* No warranty is expressed or implied.    Written by Dave L Clark     *
+* Neither the author nor the company is   WinWholesale Group Services *
+* responsible for any loss or damage      3110 Kettering Blvd.        *
+* resulting from the use of this code.    Dayton, OH  45439           *
+* Source is provided on an as-is basis.   Phone (937)294-5331         *
+*                                                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* Some examples (in the form of excerpts from an assembler listing):  *
+*                                                                     *
+* 1246 * COMPARE START FIELD...                                       *
+* 1247          SFE   ATR=(ASKIP,NORM)                                *
+* 1249+         DC    X'1DF0'       START FIELD- (ASKIP,NORM)         *
+*                                                                     *
+* 1246 * VS. START FIELD EXTENDED                                     *
+* 1247          SFE   ATR=(ASKIP,NORM),CLR=TURQ                       *
+* 1249+         DC    X'2902'       START FIELD EXTENDED              *
+* 1250+         DC    X'C0F0'         ATR=(ASKIP,NORM)                *
+* 1251+         DC    X'42F5'         CLR=TURQ                        *
+*                                                                     *
+* 1275 * MIXING CHARACTER ATTRIBUTES WITH FIELD USAGE                 *
+* 1276          SFE   03,19,ATR=(ASKIP,BRT),CLR=BLUE                  *
+* 1277+         DC    X'11C2F2'     SET BUFFER ADDRESS (03,19)        *
+* 1279+         DC    X'2902'       START FIELD EXTENDED              *
+* 1280+         DC    X'C0F8'         ATR=(ASKIP,BRT)                 *
+* 1281+         DC    X'42F1'         CLR=BLUE                        *
+* 1282          DC    C'Win'                                          *
+* 1283          SFE   CLR=WHITE                                       *
+* 1284+         DC    X'2842F7'     SET ATTRIBUTE (CLR=WHITE)         *
+* 1285          DC    C'Wholesale'                                    *
+* 1286          SFE   CLR=DEFAULT                                     *
+* 1287+         DC    X'284200'     SET ATTRIBUTE (CLR=DEFAULT)       *
+* 1288          SFE   ATR=(ASKIP,NORM),CLR=TURQ                       *
+* 1290+         DC    X'2902'       START FIELD EXTENDED              *
+* 1291+         DC    X'C0F0'         ATR=(ASKIP,NORM)                *
+* 1292+         DC    X'42F5'         CLR=TURQ                        *
+* 1293          DC    X'08A208A2'             EM DASH                 *
+* 1294          SFE   ATR=(ASKIP,BRT),CLR=WHITE                       *
+* 1296+         DC    X'2902'       START FIELD EXTENDED              *
+* 1297+         DC    X'C0F8'         ATR=(ASKIP,BRT)                 *
+* 1298+         DC    X'42F7'         CLR=WHITE                       *
+* 1299          DC    C'The WIN Group of Companies'                   *
+*                                                                     *
+* 1424 * INPUT FIELD WITH PRECEDING LABEL AND FOLLOWING "STOP" FIELD  *
+* 1425          SFE   23,01,ATR=(ASKIP,BRT),CLR=WHITE                 *
+* 1426+         DC    X'115B60'     SET BUFFER ADDRESS (23,01)        *
+* 1428+         DC    X'2902'       START FIELD EXTENDED              *
+* 1429+         DC    X'C0F8'         ATR=(ASKIP,BRT)                 *
+* 1430+         DC    X'42F7'         CLR=WHITE                       *
+* 1431          DC    C'==>'                                          *
+* 1432          SFE   ATR=(UNPROT,NORM,IC),CLR=GREEN                  *
+* 1434+         DC    X'2902'       START FIELD EXTENDED              *
+* 1435+         DC    X'C040'         ATR=(UNPROT,NORM,IC)            *
+* 1436+         DC    X'42F4'         CLR=GREEN                       *
+* 1437+         DC    X'13'         INSERT CURSOR                     *
+* 1438          SFE   23,80,ATR=PROT,CLR=BLUE,RA=00                   *
+* 1439+         DC    X'3C5C6F00'   REPEAT TO ADDRESS (23,80)         *
+* 1441+         DC    X'2902'       START FIELD EXTENDED              *
+* 1442+         DC    X'C060'         ATR=PROT                        *
+* 1443+         DC    X'42F1'         CLR=BLUE                        *
+*                                                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.BEGIN   ANOP
+.*
+&HEX3270 SETC  '40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F50D1D2D3D4D5D6D7D8D95A5*
+               B5C5D5E5F6061E2E3E4E5E6E7E8E96A6B6C6D6E6FF0F1F2F3F4F5F6F*
+               7F8F97A7B7C7D7E7F'
+&IC      SETB  0
+&LBL     SETC  '&LBLNAME'
+&OPTS(1) SETB  0
+&OPTS(2) SETB  0
+&OPTS(3) SETB  0
+&OPTS(4) SETB  0
+&OPTS(5) SETB  0
+&OPTS(6) SETB  0
+&OPTS(7) SETB  1                  INPUT
+&OPTS(8) SETB  1                  OUTPUT
+.*
+.CHKROW  AIF   (T'&ROW NE 'O').CHKCOL  IF ROW NOT OMITTED, GO CHECK COL
+         AIF   (T'&COL EQ 'O').CHKATR  IF COL OMITTED, GO CHECK ATR
+         MNOTE 4,'''COL'' specified without ''ROW'' -- ignored'
+         AGO   .CHKATR
+.CHKCOL  AIF   (T'&COL NE 'O').CHKWDT  IF COL NOT OMITTED, GO CHECK WDT
+         MNOTE 4,'''ROW'' specified without ''COL'' -- ignored'
+         AGO   .CHKATR
+.*
+.CHKWDT  ANOP                          CHECK SCREEN WIDTH VALUE
+         AIF   (&WDT   EQ 160).CHK160
+         AIF   (&WDT   EQ 132).CHK132
+         AIF   (&WDT   EQ  80).CHK080
+         MNOTE 8,'''WDT'' must be 80, 132, or 160'
+         MEXIT
+.CHK080  ANOP
+         AIF   (&COL  GT &WDT).ERR080
+         AIF   (&ROW  LE   43).WARN80
+.ERR080  MNOTE 8,'For WDT=&WDT, ''ROW'' > 43 or ''COL'' > 80'
+         MEXIT
+.WARN80  AIF   (&ROW  LE   24).GENADR
+         MNOTE 4,'Warning: For WDT=&WDT, ''ROW'' > 24'
+.CHK132  ANOP
+         AIF   (&COL  GT &WDT).ERR132
+         AIF   (&ROW  LE   27).GENADR
+.ERR132  MNOTE 8,'For WDT=&WDT, ''ROW'' > 27 or ''COL'' > 132'
+         MEXIT
+.CHK160  ANOP
+         AIF   (&COL  GT &WDT).ERR160
+         AIF   (&ROW  LE   25).GENADR
+.ERR160  MNOTE 8,'For WDT=&WDT, ''ROW'' > 25 or ''COL'' > 160'
+         MEXIT
+.*
+.GENADR  ANOP
+&T       SETA  (&ROW-1)*&WDT+(&COL-1)  CALCULATE BUFFER OFFSET
+&A1      SETA  &T/64                   CALC. HIGH-ORDER 12 BITS
+&A2      SETA  &T-(&A1*64)             CALC. LOW-ORDER 12 BITS
+&C1      SETC  '&HEX3270'(&A1*2+1,2)   GET 3270 MSB ADDR CHARACTER
+&C2      SETC  '&HEX3270'(&A2*2+1,2)   GET 3270 LSB ADDR CHARACTER
+.GENSBA  AIF   (T'&RA  NE 'O').GENRA   IF RA NOT OMITTED, GO GEN RA
+&STR     SETC  '     SET BUFFER ADDRESS (&ROW,&COL)'
+&LBL     DC    X'11&C1&C2'&STR
+         AGO   .ADRLBL
+.GENRA   ANOP                          GEN RA
+&STR     SETC  '   REPEAT TO ADDRESS (&ROW,&COL)'
+&RAC     SETC  '&RA'
+         AIF   ('&RAC'(1,1) NE '''').NOQUOTE
+&T       SETA  K'&RAC-2                GET LENGTH MINUS QUOTES
+&RAC     SETC  '&RAC'(2,&T)            STRIP QUOTES FROM STRING
+.NOQUOTE AIF   (K'&RAC GT  1 ).HEXRAC  REPEAT CHARACTER? OR HEX?
+&LBL     DC    X'3C&C1&C2',C'&RAC'&STR
+         AGO   .ADRLBL
+.HEXRAC  ANOP
+&LBL     DC    X'3C&C1&C2&RAC'&STR
+.ADRLBL  ANOP
+&LBL     SETC  ''                      LABEL USED, CLEAR IT
+         AGO   .CHKATR
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Check the field attribute                                           *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.CHKATR  ANOP
+         AIF   (T'&ATR EQ 'O').CHKEXA
+         DFHANRAT &ATR                 PASS ATTRIBUTE SUBLIST
+.*       AIF   (&SYSM_SEV EQ 0).GENATR
+.*       MNOTE 8,'''ATR'' failed validation, rc=&SYSM_SEV'
+.*       MEXIT
+.GENATR  ANOP
+&FLDA    SETC  '&HEX3270'(&ARG*2+1,2)
+         AGO   .CHKEXA
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Check for extended attributes                                       *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.CHKEXA  ANOP
+         AIF   (T'&CLR NE 'O').CHKEXC
+         AIF   (T'&HLT NE 'O').CHKEXH
+         AIF   (T'&ATR NE 'O').GENSF
+         MNOTE 8,'''ATR'' is required without ''CLR'' or ''HLT'''
+         MEXIT
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Generate standard field                                             *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.GENSF   ANOP
+&STR     SETC  '       START FIELD- &ATR'
+&LBL     DC    X'1D&FLDA'&STR
+&LBL     SETC  ''                      LABEL USED, CLEAR IT
+         AGO   .CHKCSR
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Check the extended color                                            *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.CHKEXC  ANOP
+         AIF   ('&CLR'(1,1) EQ 'D').SETCLRD
+         AIF   ('&CLR'(1,1) EQ 'N').SETCLRN
+         AIF   ('&CLR'(1,1) EQ 'B').SETCLRB
+         AIF   ('&CLR'(1,1) EQ 'R').SETCLRR
+         AIF   ('&CLR'(1,1) EQ 'P').SETCLRP
+         AIF   ('&CLR'(1,1) EQ 'G').SETCLRG
+         AIF   ('&CLR'(1,1) EQ 'T').SETCLRT
+         AIF   ('&CLR'(1,1) EQ 'Y').SETCLRY
+         AIF   ('&CLR'(1,1) EQ 'W').SETCLRW
+         MNOTE 8,'''CLR'' codes are D, N, B, R, P, G, T, Y, or W'
+         MEXIT
+.SETCLRD ANOP
+&FLDC    SETC  '00'
+         AGO   .CHKEXH
+.SETCLRN ANOP
+&FLDC    SETC  'F0'
+         AGO   .CHKEXH
+.SETCLRB ANOP
+&FLDC    SETC  'F1'
+         AGO   .CHKEXH
+.SETCLRR ANOP
+&FLDC    SETC  'F2'
+         AGO   .CHKEXH
+.SETCLRP ANOP
+&FLDC    SETC  'F3'
+         AGO   .CHKEXH
+.SETCLRG ANOP
+&FLDC    SETC  'F4'
+         AGO   .CHKEXH
+.SETCLRT ANOP
+&FLDC    SETC  'F5'
+         AGO   .CHKEXH
+.SETCLRY ANOP
+&FLDC    SETC  'F6'
+         AGO   .CHKEXH
+.SETCLRW ANOP
+&FLDC    SETC  'F7'
+         AGO   .CHKEXH
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Check the extended hilight                                          *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.CHKEXH  ANOP
+         AIF   (T'&HLT EQ 'O').GENSFE
+         AIF   ('&CLR'(1,1) EQ 'D').SETHLTD
+         AIF   ('&CLR'(1,1) EQ 'N').SETHLTN
+         AIF   ('&CLR'(1,1) EQ 'B').SETHLTB
+         AIF   ('&CLR'(1,1) EQ 'R').SETHLTR
+         AIF   ('&CLR'(1,1) EQ 'U').SETHLTU
+         MNOTE 8,'''HLT'' codes are D, N, B, R, or U'
+         MEXIT
+.SETHLTD ANOP
+&FLDH    SETC  '00'
+         AGO   .GENSFE
+.SETHLTN ANOP
+&FLDH    SETC  'F0'
+         AGO   .GENSFE
+.SETHLTB ANOP
+&FLDH    SETC  'F1'
+         AGO   .GENSFE
+.SETHLTR ANOP
+&FLDH    SETC  'F2'
+         AGO   .GENSFE
+.SETHLTU ANOP
+&FLDH    SETC  'F4'
+         AGO   .GENSFE
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Generate extended field                                             *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.GENSFE  ANOP
+         AIF   (T'&ATR EQ 'O').GENSA
+         AIF   (T'&CLR EQ 'O').GENSFE2
+         AIF   (T'&HLT NE 'O').GENSFE3
+.GENSFE2 ANOP
+&LBL     DC    X'2902'       START FIELD EXTENDED
+         AGO   .SFEATR
+.GENSFE3 ANOP
+&LBL     DC    X'2903'       START FIELD EXTENDED
+.SFEATR  ANOP
+&STR     SETC  '         ATR=&ATR'
+         DC    X'C0&FLDA'&STR
+.SFECLR  AIF   (T'&CLR EQ 'O').SFEHLT
+&STR     SETC  '         CLR=&CLR'
+         DC    X'42&FLDC'&STR
+.SFEHLT  AIF   (T'&HLT EQ 'O').SFELBL
+&STR     SETC  '         HLT=&HLT'
+         DC    X'41&FLDH'&STR
+.SFELBL  ANOP
+&LBL     SETC  ''                      LABEL USED, CLEAR IT
+         AGO   .CHKCSR
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Set character attributes only                                       *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.GENSA   ANOP
+.SACLR   AIF   (T'&CLR EQ 'O').SAHLT
+&STR     SETC  '     SET ATTRIBUTE (CLR=&CLR)'
+&LBL     DC    X'2842&FLDC'&STR
+&LBL     SETC  ''                      LABEL USED, CLEAR IT
+.SAHLT   AIF   (T'&HLT EQ 'O').CHKCSR
+&STR     SETC  '     SET ATTRIBUTE (HLT=&HLT)'
+&LBL     DC    X'2841&FLDH'&STR
+&LBL     SETC  ''                      LABEL USED, CLEAR IT
+         AGO   .CHKCSR
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Check for insert cursor option                                      *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.CHKCSR  ANOP
+         AIF   (NOT &IC).SFEXIT
+&LBL     DC    X'13'         INSERT CURSOR
+         AGO   .SFEXIT
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+* Macro exit                                                          *
+* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+.SFEXIT  ANOP
+         MEND
