@@ -12,8 +12,9 @@
 *                                                                     *
 * <label>  SELECT                                                     *
 *          CASE  expression<,{AND|OR},expression>                     *
-*          ...                                                        *
-*         <CASE  ELSE>                                                *
+*           ...                                                       *
+*         <CASE  OTHER>                                               *
+*         < ...>                                                      *
 *          ENDSL                                                      *
 *                                                                     *
 * Where: '<>'       encloses optional operands                        *
@@ -28,14 +29,14 @@
 *                          mask  is the testing mask (if needed)      *
 *        'AND|OR'   Boolean conector for double condition testing     *
 *                                                                     *
-* Note: Up to 98 CASE statements are allowed (or 97 plus CASE ELSE).  *
+* Note: Up to 98 CASE statements are allowed (or 97 plus CASE OTHER). *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .OK      ANOP
 &LBLNAME DS    0H
 &SLSEQ   SETA  1
 &SLNDX   SETC  '&SYSNDX'
          MEND
- 
+
          MACRO
          CASE  &A,&T,&B,&CONN,&C,&S,&D,&BAD
          GBLA  &SLSEQ
@@ -48,9 +49,9 @@
 .OK      AIF   (T'&BAD EQ 'O').GOOD
          MNOTE 12,'TOO MANY OPERANDS IN ''CASE'' STATEMENT'
          MEXIT
-.GOOD    AIF   ('&A' NE 'ELSE').GO
+.GOOD    AIF   ('&A' NE 'OTHER').GO
          AIF   (T'&T EQ 'O').GO
-         MNOTE 12,'TOO MANY OPERANDS ON ''CASE ELSE'' STATEMENT'
+         MNOTE 12,'TOO MANY OPERANDS ON ''CASE OTHER'' STATEMENT'
          MEXIT
 .GO      ANOP
 &LVL     SETC  '&SLNDX'
@@ -62,7 +63,7 @@
 &SLSEQ   SETA  &SLSEQ+1
 &N       SETC  '&SLSEQ'
 SL&LVL&Q DS    0H
-         AIF   ('&A' EQ 'ELSE').EXIT
+         AIF   ('&A' EQ 'OTHER').EXIT
          AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1
          MNOTE 12,'MISSING OPERAND(S) IN ''CASE'' STATEMENT'
          MEXIT
@@ -118,7 +119,7 @@ SL&LVL&Q DS    0H
 DO&LVL&Q DS    0H
 * ------------------------------------------------------------------- *
          MEND
- 
+
          MACRO
          ENDSL
          GBLA  &SLSEQ
