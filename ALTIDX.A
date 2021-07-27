@@ -1,0 +1,174 @@
+         MACRO
+&AIXLBL  ALTIDX &TYPE=ENTRY,&BASELBL=,&BASERECL=,&BASEKEY=,&AIXKEYS=,  X
+               &INCLUDE=,&OMIT=
+         GBLA  MAX,RECL                FOR PASSING TO AIXCOND SUB-MACRO
+         LCLA  C,L,N,S
+         LCLC  STR
+&MAX     SETA  9                       MAXIMUM KEY PAIRS AND CONDITIONS
+         AGO   .START
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                                                     *
+*       K W I K K E Y   A I X   T A B L E   D E F I N I T I O N       *
+*                                                                     *
+*                                                                     *
+* Winsupply Group Services                            Written by:     *
+* 3110 Kettering Boulevard                         Dave Leonard Clark *
+* Morraine, OH  45439  USA                           (937)751-3300    *
+*                                                                     *
+* No warranty is expressed  or  implied.   Neither the author nor the *
+* company is responsible for  any  loss  or damage resulting from the *
+* use of this code.  Source is provided on an as-is basis.            *
+*
+* =================================================================== *
+*                                                                     *
+*     Expected use is as follows  (see the GETQKEY program source for *
+* more information):                                                  *
+*                                                                     *
+*         ALTIDX TYPE=BEGIN                                           *
+* altname ALTIDX BASELBL=basename,BASERECL=reclen,                  X *
+*                BASEKEY=(offset,length),                           X *
+*                AIXKEYS=(...)<,{INCLUDE|OMIT}=(...) >                *
+*         ...etc...                                                   *
+*         ALTIDX TYPE=END                                             *
+*                                                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.START   ANOP
+         AIF   ('&TYPE' EQ 'BEGIN').BEGIN
+         AIF   ('&TYPE' EQ 'END'  ).END
+         AIF   ('&TYPE' EQ 'ENTRY').ENTRY
+         MNOTE 12,'UNKNOWN TYPE - &TYPE'
+         MEXIT
+.BEGIN   ANOP
+QKEYTBL  DS    0D                      DEFINE BEGINNING OF TABLE
+         MEXIT
+.*
+.END     ANOP
+         DC    X'FFFFFFFFFFFFFFFF'     MARK END OF TABLE
+         MEXIT
+.*
+.ENTRY   AIF   (T'&AIXLBL NE 'O').AIXLBL
+         MNOTE 12,'AIX LABEL OMITTED'
+         MEXIT
+.AIXLBL  ANOP
+&AIXLBL  DC    CL8'&AIXLBL'            AIX LABEL
+.*
+         AIF   (T'&BASELBL NE 'O').BASELBL
+         MNOTE 12,'BASE LABEL OMITTED'
+         MEXIT
+.BASELBL ANOP
+         DC    CL8'&BASELBL'           BASE LABEL
+.*
+         AIF   (T'&BASERECL EQ 'O').ERRRECL
+         AIF   (&BASERECL LT 1).ERRRECR
+         AIF   (&BASERECL LE 32758).BASERCL
+.ERRRECR MNOTE 8,'BASE RECORD LENGTH < 1 OR > 32758 (32kb-10)'
+         MEXIT
+.ERRRECL MNOTE 12,'BASE RECORD LENGTH OMITTED'
+         MEXIT
+.*
+.BASERCL ANOP
+&RECL    SETA  &BASERECL
+         DC    H'&RECL'                BASE RECORD LENGTH
+.*
+         AIF   (T'&BASEKEY EQ 'O').ERRBKEY
+         AIF   (N'&BASEKEY NE 2).ERRBKYN
+         AIF   (&BASEKEY(1) LT 0).ERRBKYO
+         AIF   (&BASEKEY(1) GE &RECL).ERRBKYO
+         AIF   (&BASEKEY(2) LT 1).ERRBKYL
+         AIF   (&BASEKEY(2) GT 255).ERRBKYL
+         AIF   (&BASEKEY(2) GT &RECL).ERRBKYR
+         AIF   (&BASEKEY(1)+&BASEKEY(2) LE &RECL).BASEKEY
+         MNOTE 8,'BASE KEY OFFSET+LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.ERRBKYR MNOTE 8,'BASE KEY LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.ERRBKYL MNOTE 8,'BASE KEY LENGTH < 1 OR > 255'
+         MEXIT
+.ERRBKYO MNOTE 8,'BASE KEY OFFSET < 0 OR >= BASE RECORD LENGTH'
+         MEXIT
+.ERRBKYN MNOTE 8,'BASE KEY NOT AN OFFSET,LENGTH PAIR'
+         MEXIT
+.ERRBKEY MNOTE 12,'BASE KEY OMITTED'
+         MEXIT
+.*
+.BASEKEY ANOP
+&STR     SETC  '              BASE KEY OFFSET/LENGTH'
+         DC    H'&BASEKEY(1)',H'&BASEKEY(2)'&STR
+.*
+         AIF   (T'&AIXKEYS EQ 'O').ERRAKEY
+         AIF   (N'&AIXKEYS LT 1).ERRAKYN
+         AIF   (N'&AIXKEYS GT &MAX).ERRAKYN
+&N       SETA  N'&AIXKEYS
+         DC    H'0',H'&N'              NUMBER OF AIX KEYS
+&N       SETA  1
+&S       SETA  0
+.CHKXKLP AIF   (&N GT N'&AIXKEYS).FILLUP
+         AIF   (N'&AIXKEYS(&N) NE 2).ERRXKYN
+         AIF   (&AIXKEYS(&N,1) LT 0).ERRXKYO
+         AIF   (&AIXKEYS(&N,1) GE &RECL).ERRXKYO
+         AIF   (&AIXKEYS(&N,2) LT 1).ERRXKYL
+         AIF   (&AIXKEYS(&N,2) GT 255).ERRXKYL
+         AIF   (&AIXKEYS(&N,2) GT &RECL).ERRXKYR
+         AIF   (&AIXKEYS(&N,1)+&AIXKEYS(&N,2) GT &RECL).ERRXKYT
+&S       SETA  &S+&AIXKEYS(&N,2)
+         AIF   (&S GT 255).ERRXKYS
+&STR     SETC  '              AIX KEY &N OFFSET/LENGTH'
+         DC    H'&AIXKEYS(&N,1)',H'&AIXKEYS(&N,2)'&STR
+&N       SETA  &N+1
+         AGO   .CHKXKLP
+.ERRXKYS MNOTE 8,'AIX KEYS TOTAL LENGTH > 255'
+         MEXIT
+.ERRXKYT MNOTE 8,'AIX KEY(&N) OFFSET+LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.ERRXKYR MNOTE 8,'AIX KEY(&N) LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.ERRXKYL MNOTE 8,'AIX KEY(&N) LENGTH < 1 OR > 255'
+         MEXIT
+.ERRXKYO MNOTE 8,'AIX KEY(&N) OFFSET < 0 OR >= BASE RECORD LENGTH'
+         MEXIT
+.ERRXKYN MNOTE 8,'AIX KEY(&N) NOT AN OFFSET,LENGTH PAIR'
+         MEXIT
+.ERRAKYN MNOTE 8,'AIX KEYS < 1 OR > &MAX'
+         MEXIT
+.ERRAKEY MNOTE 12,'AIX KEYS OMITTED'
+         MEXIT
+.*
+.FILLUP  ANOP
+         AIF   (&N GT &MAX).NEXT
+&STR     SETC  '               AIX KEY &N OFFSET/LENGTH'
+         DC    H'0',H'0'&STR
+&N       SETA  &N+1
+         AGO   .FILLUP
+.NEXT    ANOP
+         ORG   *-40
+         DC    H'&S'                   AIX TOTAL KEY LENGTH
+         ORG
+.*
+         AIF   (T'&INCLUDE NE 'O' AND T'&OMIT NE 'O').EXCLUDE
+         AIF   (T'&INCLUDE NE 'O').INCLUDE
+         AIF   (T'&OMIT NE 'O').OMIT
+&STR     SETC  ''
+         AIXCOND &STR
+         AGO   .DONE
+.EXCLSTS MNOTE 12,'INCLUDE/OMIT FIRST ELEMENT MUST BE A SUBLIST'
+         MEXIT
+.EXCLIST MNOTE 12,'INCLUDE/OMIT MUST BE SUBLISTED'
+         MEXIT
+.EXCLUDE MNOTE 12,'INCLUDE AND OMIT ARE MUTUALLY EXCLUSIVE PARAMETERS'
+         MEXIT
+.INCLUDE ANOP
+         AIF   (N'&INCLUDE EQ 0).EXCLIST
+         AIF   ('&INCLUDE'(1,1) NE '(').EXCLIST
+         AIF   ('&INCLUDE(1)'(1,1) NE '(').EXCLSTS
+         AIXCOND IN,&INCLUDE
+         AGO   .DONE
+.OMIT    ANOP
+         AIF   (N'&OMIT EQ 0).EXCLIST
+         AIF   ('&OMIT'(1,1) NE '(').EXCLIST
+         AIF   ('&OMIT(1)'(1,1) NE '(').EXCLSTS
+         AIXCOND OM,&OMIT
+         AGO   .DONE
+.*
+.DONE    ANOP
+*
+         MEND

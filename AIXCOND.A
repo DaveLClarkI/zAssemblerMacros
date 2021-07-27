@@ -1,0 +1,138 @@
+         MACRO
+         AIXCOND &TYPE,&COND
+         GBLA  MAX,RECL                PASSED FROM ALTIDX MAIN MACRO
+         LCLA  C,L,N,O,S
+         LCLC  A,P,STR,T,V
+&N       SETA  N'&COND                 NUMBER OF LIST ELEMENTS PASSED
+&C       SETA  (&N+1)/2                NUMBER OF CONDITIONS PASSED
+         AIF   (&C LE &MAX).START
+         MNOTE 8,'INCLUDE/OMIT CONDITIONS > &MAX'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                                                     *
+*       K W I K K E Y   A I X   T A B L E   C O N D I T I O N S       *
+*                                                                     *
+*                                                                     *
+* Winsupply Group Services                            Written by:     *
+* 3110 Kettering Boulevard                         Dave Leonard Clark *
+* Morraine, OH  45439  USA                           (937)751-3300    *
+*                                                                     *
+* No warranty is expressed  or  implied.   Neither the author nor the *
+* company is responsible for  any  loss  or damage resulting from the *
+* use of this code.  Source is provided on an as-is basis.            *
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.START   ANOP
+         DC    H'&C'                   NUMBER OF CONDITIONS
+.*
+&C       SETA  0                       CONDITION NUMBER
+&S       SETA  0                       SUBSCRIPT NUMBER
+         AIF   ('&TYPE' EQ '').FILLUP
+&A       SETC  '&TYPE'(1,2)
+.CHKXKLP ANOP
+&S       SETA  &S+1
+         AIF   (&S GT &N).FILLUP
+&C       SETA  &C+1
+         AIF   (N'&COND(&S) NE 4).CONDKYN
+         AIF   (&COND(&S,1) LT 0).CONDKYO
+         AIF   (&COND(&S,1) GE &RECL).CONDKYO
+         AIF   (&COND(&S,2) LT 1).CONDKYL
+         AIF   (&COND(&S,2) GT 8).CONDKYL
+         AIF   (&COND(&S,2) GT &RECL).CONDKYR
+         AIF   (&COND(&S,1)+&COND(&S,2) GT &RECL).CONDKYT
+&STR     SETC  '  C&C'
+&O       SETA  &COND(&S,1)
+&L       SETA  &COND(&S,2)
+&P       SETC  '&COND(&S,3)'(1,2)
+&T       SETC  '&COND(&S,4)'(1,1)
+&V       SETC  '&COND(&S,4)'(2,*)
+         AIF  ('&P' NE 'EQ' AND '&P' NE 'NE' AND                       X
+               '&P' NE 'LT' AND '&P' NE 'LE' AND                       X
+               '&P' NE 'GT' AND '&P' NE 'GE').CONDKYP
+         AIF  ('&T' NE 'C' AND '&T' NE 'P' AND                         X
+               '&T' NE 'B' AND '&T' NE 'H' AND                         X
+               '&T' NE 'F' AND '&T' NE 'D').CONDKYX
+         AIF   ('&T' EQ 'C').SETXKYC
+         AIF   ('&T' EQ 'P').SETXKYP
+         AIF   ('&T' EQ 'B').SETXKYB
+         AIF   ('&T' EQ 'H').SETXKYH
+         AIF   ('&T' EQ 'F').SETXKYF
+         DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',DL8&V,XL2'0'
+         AGO   .CHKNEXT
+.SETXKYF DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',FL4&V,XL6'0'
+         AGO   .CHKNEXT
+.SETXKYH DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',HL2&V,XL8'0'
+         AGO   .CHKNEXT
+.SETXKYB AIF   (&L GT 3).SETXK4B
+         AIF   (&L GT 2).SETXK3B
+         AIF   (&L GT 1).SETXK2B
+         DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',BL1&V,XL9'0'
+         AGO   .CHKNEXT
+.SETXK2B DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',BL2&V,XL8'0'
+         AGO   .CHKNEXT
+.SETXK3B DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',BL3&V,XL7'0'
+         AGO   .CHKNEXT
+.SETXK4B DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',BL4&V,XL6'0'
+         AGO   .CHKNEXT
+.SETXKYP AIF   (&L GT 9).SETXK0P
+         AIF   (&L GT 8).SETXK9P
+         AIF   (&L GT 7).SETXK8P
+         AIF   (&L GT 6).SETXK7P
+         AIF   (&L GT 5).SETXK6P
+         AIF   (&L GT 4).SETXK5P
+         AIF   (&L GT 3).SETXK4P
+         AIF   (&L GT 2).SETXK3P
+         AIF   (&L GT 1).SETXK2P
+         DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL1&V,XL9'0'
+         AGO   .CHKNEXT
+.SETXK2P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL2&V,XL8'0'
+         AGO   .CHKNEXT
+.SETXK3P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL3&V,XL7'0'
+         AGO   .CHKNEXT
+.SETXK4P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL4&V,XL6'0'
+         AGO   .CHKNEXT
+.SETXK5P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL5&V,XL5'0'
+         AGO   .CHKNEXT
+.SETXK6P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL6&V,XL4'0'
+         AGO   .CHKNEXT
+.SETXK7P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL7&V,XL3'0'
+         AGO   .CHKNEXT
+.SETXK8P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL8&V,XL2'0'
+         AGO   .CHKNEXT
+.SETXK9P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL9&V,XL1'0'
+         AGO   .CHKNEXT
+.SETXK0P DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',PL10&V
+         AGO   .CHKNEXT
+.SETXKYC DC    C'&A',H'&O',H'&L',C'&P',CL2'&T:',CL10&V
+         AGO   .CHKNEXT
+.CHKNEXT ANOP
+&S       SETA  &S+1
+         AIF   (&S GT &N).FILLUP
+&A       SETC  '&COND(&S)'
+         AIF   ('&A' NE 'AND' AND '&A' NE 'OR').CONDART
+&A       SETC  '&A'(1,2)
+         AGO   .CHKXKLP
+.CONDART MNOTE 8,'CONDITION(&C) EXPECTED ''AND'' OR ''OR'' (&A)'
+         MEXIT
+.CONDKYX MNOTE 8,'CONDITION(&C) UNKNOWN SELF-DEFINING TERM (&T)'
+         MEXIT
+.CONDKYP MNOTE 8,'CONDITION(&C) UNKNOWN OPERATOR (&P)'
+         MEXIT
+.CONDKYT MNOTE 8,'CONDITION(&C) OFFSET+LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.CONDKYR MNOTE 8,'CONDITION(&C) LENGTH > BASE RECORD LENGTH'
+         MEXIT
+.CONDKYL MNOTE 8,'CONDITION(&C) LENGTH < 1 OR > 8'
+         MEXIT
+.CONDKYO MNOTE 8,'CONDITION(&C) OFFSET < 0 OR >= BASE RECORD LENGTH'
+         MEXIT
+.CONDKYN MNOTE 12,'CONDITION(&C) REQUIRES 4 ELEMENTS'
+         MEXIT
+.FILLUP  ANOP
+         AIF   (&C GE &MAX).DONE
+&C       SETA  &C+1
+&STR     SETC  '     C&C'
+         DC    C'  ',H'0',H'0',C'  ',CL12' '&STR
+         AGO   .FILLUP
+.DONE    ANOP
+         MEND
