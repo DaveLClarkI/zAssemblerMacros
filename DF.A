@@ -4,47 +4,54 @@
          MNOTE 12,'TOO MANY OPERANDS SPECIFIED'
          MEXIT
 .GOOD    AIF   (T'&MASK NE 'O').BEGIN
-         MNOTE 12,'AN OPERAND IS REQUIRED'
+         MNOTE 12,'BIT MASK IS MISSING'
          MEXIT
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-.* This is a simple macro to make it easier to accurately manipulate *
-.* a bit flag definition just by  the equated bit mask name -- i.e., *
-.* the macro does not need to know  the name of the actual flag byte *
-.* nor the flag byte even have to have a name at all.                *
+.* This macro is for defining the  bit masks (flags) to use with the *
+.* TF (Test Flag),  SF (Set Flag), and CF (Clear Flag) macros.   You *
+.* define the flag  byte,  itself,  immediately  prior to using this *
+.* macro.   Note that, in this scenario, the flag byte does not have *
+.* to have its own name -- that is up to you.                        *
 .*                                                                   *
 .* As presented by the late Dr. John Ehrman of IBM at SHARE.         *
 .*                                                                   *
-.* The idea is,  you can have a  definition similar to either of the *
-.* following.  The actual flag byte does not need a name but you can *
-.* specify one if you want it  to  show up in the cross-reference or *
-.* if you want the equated  bit  masks  to follow the flag byte def- *
-.* inition.   The equated bit masks then take on the location of the *
-.* flag byte and the length of  the  equated  bit mask is set to the *
-.* bit mask, itself.                                                 *
+.* The idea is,  you  can  have  a  setup  similar  to either of the *
+.* following two examples.  The generated bit masks are then equated *
+.* to the location of the flag  byte  and the length of the bit mask *
+.* is set to the  value  of  the bit mask,  itself (normal assembler *
+.* rules apply to the coding of the bit mask).  The macros mentioned *
+.* will take advantage of this arrangement.                          *
 .*                                                                   *
-.* FLAG1    EQU   *,B'00000001'                                      *
-.* FLAG2    EQU   *,B'00000010'                                      *
-.* FLAG3    EQU   *,B'00000100'                                      *
-.* FLAG4    EQU   *,B'00001000'                                      *
-.* FLAG5    EQU   *,B'00010000'                                      *
-.* FLAG6    EQU   *,B'00100000'                                      *
-.* FLAG7    EQU   *,B'01000000'                                      *
-.* FLAG8    EQU   *,B'10000000'                                      *
-.*          DS    BL1           MY FLAG BYTE                         *
+.*          DS    BL1           MY FLAG BYTE (unnamed)               *
+.* FLAG1    DF    B'00000001'                                        *
+.* FLAG2    DF    B'00000010'                                        *
+.* FLAG3    DF    B'00000100'                                        *
+.* FLAG4    DF    B'00001000'                                        *
+.* FLAG5    DF    B'00010000'                                        *
+.* FLAG6    DF    B'00100000'                                        *
+.* FLAG7    DF    B'01000000'                                        *
+.* FLAG8    DF    B'10000000'                                        *
 .*                                                                   *
-.* MYFLAG   DS    BL1           MY FLAG BYTE                         *
-.* FLAG1    EQU   MYFLAG,B'00000001'                                 *
-.* FLAG2    EQU   MYFLAG,B'00000010'                                 *
-.* FLAG3    EQU   MYFLAG,B'00000100'                                 *
-.* FLAG4    EQU   MYFLAG,B'00001000'                                 *
-.* FLAG5    EQU   MYFLAG,B'00010000'                                 *
-.* FLAG6    EQU   MYFLAG,B'00100000'                                 *
-.* FLAG7    EQU   MYFLAG,B'01000000'                                 *
-.* FLAG8    EQU   MYFLAG,B'10000000'                                 *
+.* MYFLAG   DS    BL1           MY FLAG BYTE (named)                 *
+.* FLAG1    DF    B'00000001',MYFLAG                                 *
+.* FLAG2    DF    B'00000010',MYFLAG                                 *
+.* FLAG3    DF    B'00000100',MYFLAG                                 *
+.* FLAG4    DF    B'00001000',MYFLAG                                 *
+.* FLAG5    DF    B'00010000',MYFLAG                                 *
+.* FLAG6    DF    B'00100000',MYFLAG                                 *
+.* FLAG7    DF    B'01000000',MYFLAG                                 *
+.* FLAG8    DF    B'10000000',MYFLAG                                 *
 .*                                                                   *
-.* NOTE:  See also the TF, SF, and CF macros.                        *
+.* NOTE:  As a special situation,  if the flag byte is only one byte *
+.* in length,  then even if it has a  name you do not have to supply *
+.* that name to this macro.   This is because the generated bit mask *
+.* points to the relative location of the previous byte by default.  *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .BEGIN   ANOP
+         AIF   (T'&FLAG NE 'O').GEN_IT
+         MNOTE 12,'FLAG NAME IS MISSING'
+         MEXIT
+.GEN_IT  ANOP
          AIF   (T'&BASE NE 'O').BASE
 &FLAG    EQU   *-1,&MASK               DEFINE FLAG BIT(s)
          AGO   .EXIT
