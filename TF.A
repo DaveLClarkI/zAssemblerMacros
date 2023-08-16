@@ -1,16 +1,26 @@
          MACRO
-&LABEL   TF    &FLAG                   TEST FLAG BIT(s)
+&LABEL   TF    &FLAG,&BAD              TEST FLAG BIT(S)
+         AIF   (T'&BAD EQ 'O').GOOD
+         MNOTE 12,'TOO MANY OPERANDS SPECIFIED'
+         MEXIT
+.GOOD    AIF   (T'&FLAG NE 'O').BEGIN
+         MNOTE 12,'AN OPERAND IS REQUIRED'
+         MEXIT
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .* This is a simple macro to make it easier to accurately manipulate *
 .* a bit flag definition just by  the equated bit mask name -- i.e., *
-.* without having to know the  name  of  the actual flag byte or the *
-.* flag byte even having a name at all.                              *
+.* the macro does not need to know  the name of the actual flag byte *
+.* nor the flag byte even have to have a name at all.                *
 .*                                                                   *
-.* The idea is,  you can have a definition similar to the following. *
-.* The actual flag byte does not need a name but you can specify one *
-.* if you want it to  show  up in the cross-reference.   The equated *
-.* bit masks take on the location of the flag byte and the length of *
-.* the equated bit mask is set to the bit mask, itself.              *
+.* As presented by the late Dr. John Ehrman of IBM at SHARE.         *
+.*                                                                   *
+.* The idea is,  you can have a  definition similar to either of the *
+.* following.  The actual flag byte does not need a name but you can *
+.* specify one if you want it  to  show up in the cross-reference or *
+.* if you want the equated  bit  masks  to follow the flag byte def- *
+.* inition.   The equated bit masks then take on the location of the *
+.* flag byte and the length of  the  equated  bit mask is set to the *
+.* bit mask, itself.                                                 *
 .*                                                                   *
 .* FLAG1    EQU   *,B'00000001'                                      *
 .* FLAG2    EQU   *,B'00000010'                                      *
@@ -20,9 +30,20 @@
 .* FLAG6    EQU   *,B'00100000'                                      *
 .* FLAG7    EQU   *,B'01000000'                                      *
 .* FLAG8    EQU   *,B'10000000'                                      *
-.*          DS    BL1           FLAG BYTE                            *
+.*          DS    BL1           MY FLAG BYTE                         *
+.*                                                                   *
+.* MYFLAG   DS    BL1           MY FLAG BYTE                         *
+.* FLAG1    EQU   MYFLAG,B'00000001'                                 *
+.* FLAG2    EQU   MYFLAG,B'00000010'                                 *
+.* FLAG3    EQU   MYFLAG,B'00000100'                                 *
+.* FLAG4    EQU   MYFLAG,B'00001000'                                 *
+.* FLAG5    EQU   MYFLAG,B'00010000'                                 *
+.* FLAG6    EQU   MYFLAG,B'00100000'                                 *
+.* FLAG7    EQU   MYFLAG,B'01000000'                                 *
+.* FLAG8    EQU   MYFLAG,B'10000000'                                 *
 .*                                                                   *
 .* NOTE:  See also the SF macro and the CF macro.                    *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.BEGIN   ANOP
 &LABEL   TM    &FLAG,L'&FLAG           TEST FLAG BIT(s)
          MEND
