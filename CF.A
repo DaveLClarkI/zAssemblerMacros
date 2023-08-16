@@ -42,7 +42,7 @@
 .* FLAG7    EQU   MYFLAG,B'01000000'                                 *
 .* FLAG8    EQU   MYFLAG,B'10000000'                                 *
 .*                                                                   *
-.* NOTE:  See also the TF macro and the SF macro.                    *
+.* NOTE:  See also the DF, TF, and SF macros.                        *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .BEGIN   ANOP
 &LABEL   NI    &FLAG,X'FF'-L'&FLAG     CLEAR FLAG BIT(s)

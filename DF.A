@@ -1,9 +1,9 @@
          MACRO
-&LABEL   SF    &FLAG,&BAD              SET FLAG BIT(S)
+&FLAG    DF    &MASK,&BASE,&BAD        DEFINE FLAG BIT(s)
          AIF   (T'&BAD EQ 'O').GOOD
          MNOTE 12,'TOO MANY OPERANDS SPECIFIED'
          MEXIT
-.GOOD    AIF   (T'&FLAG NE 'O').BEGIN
+.GOOD    AIF   (T'&MASK NE 'O').BEGIN
          MNOTE 12,'AN OPERAND IS REQUIRED'
          MEXIT
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -42,8 +42,13 @@
 .* FLAG7    EQU   MYFLAG,B'01000000'                                 *
 .* FLAG8    EQU   MYFLAG,B'10000000'                                 *
 .*                                                                   *
-.* NOTE:  See also the DF, TF, and CF macros.                        *
+.* NOTE:  See also the TF, SF, and CF macros.                        *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .BEGIN   ANOP
-&LABEL   OI    &FLAG,L'&FLAG           SET FLAG BIT(s)
+         AIF   (T'&BASE NE 'O').BASE
+&FLAG    EQU   *-1,&MASK               DEFINE FLAG BIT(s)
+         AGO   .EXIT
+.BASE    ANOP
+&FLAG    EQU   &BASE,&MASK             DEFINE FLAG BIT(s)
+.EXIT    ANOP
          MEND
