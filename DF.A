@@ -1,7 +1,7 @@
          MACRO
 &FLAG    DF    &MASK,&BASE,&BAD        DEFINE FLAG BIT(s)
          AIF   (T'&BAD EQ 'O').GOOD
-         MNOTE 12,'TOO MANY OPERANDS SPECIFIED'
+         MNOTE 12,'TOO MANY OPERANDS SPECIFIED, BAD=&BAD'
          MEXIT
 .GOOD    AIF   (T'&MASK NE 'O').BEGIN
          MNOTE 12,'BIT MASK IS MISSING'
@@ -53,9 +53,9 @@
          MEXIT
 .GEN_IT  ANOP
          AIF   (T'&BASE NE 'O').BASE
-&FLAG    EQU   *-1,&MASK               DEFINE FLAG BIT(s)
+&FLAG    EQU   *-1,&MASK,C'f'          DEFINE FLAG BIT(s)
          AGO   .EXIT
 .BASE    ANOP
-&FLAG    EQU   &BASE,&MASK             DEFINE FLAG BIT(s)
+&FLAG    EQU   &BASE,&MASK,C'f'        DEFINE FLAG BIT(s)
 .EXIT    ANOP
          MEND
