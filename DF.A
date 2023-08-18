@@ -46,6 +46,9 @@
 .* in length,  then even if it has a  name you do not have to supply *
 .* that name to this macro.   This is because the generated bit mask *
 .* points to the relative location of the previous byte by default.  *
+.*        Conversely,  as another  special  situation,  a named flag *
+.* byte does not *have* to be defined *before* the use of this macro *
+.* -- as long as the name of the flag byte *is* supplied here.       *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .BEGIN   ANOP
          AIF   (T'&FLAG NE 'O').GEN_IT
@@ -53,9 +56,9 @@
          MEXIT
 .GEN_IT  ANOP
          AIF   (T'&BASE NE 'O').BASE
-&FLAG    EQU   *-1,&MASK,C'f'          DEFINE FLAG BIT(s)
+&FLAG    EQU   *-1,&MASK,C'B',C'Flag'       DEFINE FLAG BIT(s)
          AGO   .EXIT
 .BASE    ANOP
-&FLAG    EQU   &BASE,&MASK,C'f'        DEFINE FLAG BIT(s)
+&FLAG    EQU   &BASE,&MASK,C'B',C'Flag'     DEFINE FLAG BIT(s)
 .EXIT    ANOP
          MEND
