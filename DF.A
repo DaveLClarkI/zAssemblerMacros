@@ -56,9 +56,9 @@
          MEXIT
 .GEN_IT  ANOP
          AIF   (T'&BASE NE 'O').BASE
-&FLAG    EQU   *-1,&MASK,C'm'               DEFINE FLAG BIT(s)
+&FLAG    EQU   *-1,&MASK               DEFINE FLAG BIT(s)
          AGO   .EXIT
 .BASE    ANOP
-&FLAG    EQU   &BASE,&MASK,C'm'             DEFINE FLAG BIT(s)
+&FLAG    EQU   &BASE,&MASK             DEFINE FLAG BIT(s)
 .EXIT    ANOP
          MEND
