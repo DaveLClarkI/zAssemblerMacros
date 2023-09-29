@@ -7,11 +7,11 @@
          MNOTE 12,'BIT MASK IS MISSING'
          MEXIT
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-.* This macro is for defining the  bit masks (flags) to use with the *
-.* TF (Test Flag),  SF (Set Flag), and CF (Clear Flag) macros.   You *
-.* define the flag  byte,  itself,  immediately  prior to using this *
-.* macro.   Note that, in this scenario, the flag byte does not have *
-.* to have its own name -- that is up to you.                        *
+.* This macro is for defining special bit masks (flags) for use with *
+.* the TF (Test Flag),  SF (Set  Flag),  and CF (Clear Flag) macros. *
+.* You separately define the flag byte, itself, immediately prior to *
+.* using this macro.   Note that,  in  this scenario,  the flag byte *
+.* does not have to have its own name -- that is up to you.          *
 .*                                                                   *
 .* As presented by the late Dr. John Ehrman of IBM at SHARE.         *
 .*                                                                   *

@@ -1,5 +1,5 @@
          MACRO
-&LABEL   SF    &FLAG,&BAD              SET FLAG BIT(S)
+&LABEL   SF    &FLAG,&MASK,&BAD        SET FLAG BIT(S)
          AIF   (T'&BAD EQ 'O').GOOD
          MNOTE 12,'TOO MANY OPERANDS SPECIFIED, BAD=&BAD'
          MEXIT
@@ -53,7 +53,17 @@
 .* flags at the same time  is  not currently supported -- unless you *
 .* use the DF macro to generate  an additional combined flag that is *
 .* specifically for that purpose.                                    *
+.*                                                                   *
+.* Alternatively, this macro can be used on a standard flag byte and *
+.* a standard, equated bit mask.  For example:                       *
+.*                                                                   *
+.* Example: SF FLAG,MASK          SET THIS FLAG (SET ON)             *
+.* +        OI FLAG,MASK               (macro expansion)             *
 .* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .BEGIN   ANOP
+         AIF   (T'&MASK NE 'O').USEMASK
 &LABEL   OI    &FLAG,L'&FLAG           SET FLAG BIT(s)
+         MEXIT
+.USEMASK ANOP
+&LABEL   OI    &FLAG,&MASK             SET FLAG BIT(s)
          MEND

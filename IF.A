@@ -3,7 +3,7 @@
 &LBLNAME IF    &A,&T,&B,&CONN,&C,&S,&D,&BAD
          GBLA  &IFLVL,&IFSEQ(8)
          GBLC  &IFNDX(8)
-         LCLC  &LVL,&X,&B1,&D1
+         LCLC  &LVL,&X
          AIF   (T'&BAD EQ 'O').GOOD
          MNOTE 12,'TOO MANY OPERANDS IN ''IF'' STATEMENT'
          MEXIT
@@ -57,21 +57,30 @@ IF&LVL   DS    0H
          MNOTE 12,'MISSING OPERAND(S) IN ''IF'' STATEMENT'
          MEXIT
 .OK1     ANOP
-&B1      SETC  ''
          AIF   ('&A' EQ '$NOOP').CHK1
-&B1      SETC  ','.'&B'
          AIF   ('&B' NE '$NOOP').OK1X
-&B1      SETC  ''
-.OK1X    ANOP
          AIF   (T'&T(2) NE 'O').TST1
-&LBLNAME CLI   &A.&B1
-         AGO   .CHK1
-.TST1    AIF   (T'&T(3) NE 'O').TST1M
-&LBLNAME &T(2) &A.&B1
+         MNOTE 12,'TESTING INSTRUCTION REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST1    ANOP
+         AIF   (T'&T(3) NE 'O').TST1M
+&LBLNAME &T(2) &A
          AGO   .CHK1
 .TST1M   ANOP
-&LBLNAME &T(2) &A,&T(3).&B1
-.CHK1    AIF   ('&CONN' EQ 'OR' ).OR
+&LBLNAME &T(2) &A,&T(3)
+         AGO   .CHK1
+.OK1X    ANOP
+         AIF   (T'&T(2) NE 'O').TST1X
+&LBLNAME CLI   &A,&B
+         AGO   .CHK1
+.TST1X   ANOP
+         AIF   (T'&T(3) NE 'O').TST1XM
+&LBLNAME &T(2) &A,&B
+         AGO   .CHK1
+.TST1XM  ANOP
+&LBLNAME &T(2) &A,&T(3),&B
+.CHK1    ANOP
+         AIF   ('&CONN' EQ 'OR' ).OR
          AIF   ('&CONN' EQ 'BC' OR '&CONN' EQ 'BCR').BC
 &X       SETC  'N'.'&T(1)'(1,1)
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
@@ -123,20 +132,28 @@ IF&LVL   DS    0H
          MNOTE 8,'MISSING OPERAND(S) IN ''IF'' STATEMENT'
          AGO   .EXIT
 .OK2     ANOP
-&D1      SETC  ''
          AIF   ('&C' EQ '$NOOP').CHK2
-&D1      SETC  ','.'&D'
          AIF   ('&D' NE '$NOOP').OK2X
-&D1      SETC  ''
-.OK2X    ANOP
          AIF   (T'&S(2) NE 'O').TST2
-         CLI   &C.&D1
-         AGO   .CHK2
-.TST2    AIF   (T'&S(3) NE 'O').TST2M
-         &S(2) &C.&D1
+         MNOTE 12,'IF INSTRUCTION 2 REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST2    ANOP
+         AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C
          AGO   .CHK2
 .TST2M   ANOP
-         &S(2) &C,&S(3).&D1
+         &S(2) &C,&S(3)
+         AGO   .CHK2
+.OK2X    ANOP
+         AIF   (T'&S(2) NE 'O').TST2X
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2X   ANOP
+         AIF   (T'&S(3) NE 'O').TST2XM
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2XM  ANOP
+         &S(2) &C,&S(3),&D
 .CHK2    ANOP
 &X       SETC  'N'.'&S(1)'(1,1)
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
@@ -154,7 +171,7 @@ THEN&LVL DS    0H
          AND   &A,&T,&B,&CONN,&C,&S,&D,&BAD
          GBLA  &IFLVL,&IFSEQ(8)
          GBLC  &IFNDX(8)
-         LCLC  &LVL,&X,&B1,&D1
+         LCLC  &LVL,&X
          AIF   (T'&BAD EQ 'O').GOOD
          MNOTE 12,'TOO MANY OPERANDS IN ''AND'' STATEMENT'
          MEXIT
@@ -168,20 +185,28 @@ THEN&LVL DS    0H
          MNOTE 12,'MISSING OPERAND(S) IN ''AND'' STATEMENT'
          MEXIT
 .OK1     ANOP
-&B1      SETC  ''
          AIF   ('&A' EQ '$NOOP').CHK1
-&B1      SETC  ','.'&B'
          AIF   ('&B' NE '$NOOP').OK1X
-&B1      SETC  ''
-.OK1X    ANOP
          AIF   (T'&T(2) NE 'O').TST1
-         CLI   &A.&B1
-         AGO   .CHK1
-.TST1    AIF   (T'&T(3) NE 'O').TST1M
-         &T(2) &A.&B1
+         MNOTE 12,'TESTING INSTRUCTION REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST1    ANOP
+         AIF   (T'&T(3) NE 'O').TST1M
+         &T(2) &A
          AGO   .CHK1
 .TST1M   ANOP
-         &T(2) &A,&T(3).&B1
+         &T(2) &A,&T(3)
+         AGO   .CHK1
+.OK1X    ANOP
+         AIF   (T'&T(2) NE 'O').TST1X
+         CLI   &A,&B
+         AGO   .CHK1
+.TST1X   ANOP
+         AIF   (T'&T(3) NE 'O').TST1XM
+         &T(2) &A,&B
+         AGO   .CHK1
+.TST1XM  ANOP
+         &T(2) &A,&T(3),&B
 .CHK1    ANOP
 &X       SETC  'N'.'&T(1)'(1,1)
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
@@ -199,20 +224,28 @@ THEN&LVL DS    0H
          MNOTE 8,'MISSING OPERAND(S) IN ''AND'' STATEMENT'
          AGO   .EXIT
 .OK2     ANOP
-&D1      SETC  ''
          AIF   ('&C' EQ '$NOOP').CHK2
-&D1      SETC  ','.'&D'
          AIF   ('&D' NE '$NOOP').OK2X
-&D1      SETC  ''
-.OK2X    ANOP
          AIF   (T'&S(2) NE 'O').TST2
-         CLI   &C.&D1
-         AGO   .CHK2
-.TST2    AIF   (T'&S(3) NE 'O').TST2M
-         &S(2) &C.&D1
+         MNOTE 12,'TESTING INSTRUCTION2 REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST2    ANOP
+         AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C
          AGO   .CHK2
 .TST2M   ANOP
-         &S(2) &C,&S(3).&D1
+         &S(2) &C,&S(3)
+         AGO   .CHK2
+.OK2X    ANOP
+         AIF   (T'&S(2) NE 'O').TST2X
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2X   ANOP
+         AIF   (T'&S(3) NE 'O').TST2XM
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2XM  ANOP
+         &S(2) &C,&S(3),&D
 .CHK2    ANOP
 &X       SETC  'N'.'&S(1)'(1,1)
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N

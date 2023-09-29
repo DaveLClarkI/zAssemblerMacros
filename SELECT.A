@@ -44,7 +44,7 @@
          WHEN  &A,&T,&B,&CONN,&C,&S,&D,&BAD
          GBLA  &SLSEQ
          GBLC  &SLNDX
-         LCLC  &LVL,&N,&Q,&X,&B1,&D1
+         LCLC  &LVL,&N,&Q,&X
          AIF   (&SLSEQ LT 1).ERROR
          AIF   (&SLSEQ LT 99).OK
 .ERROR   MNOTE 12,'SEQUENCE ERROR IN ''SELECT'' PROCESSING'
@@ -71,21 +71,30 @@ SL&LVL&Q DS    0H
          MNOTE 12,'MISSING OPERAND(S) IN ''WHEN'' STATEMENT'
          MEXIT
 .OK1     ANOP
-&B1      SETC  ''
          AIF   ('&A' EQ '$NOOP').CHK1
-&B1      SETC  ','.'&B'
          AIF   ('&B' NE '$NOOP').OK1X
-&B1      SETC  ''
-.OK1X    ANOP
          AIF   (T'&T(2) NE 'O').TST1
-         CLI   &A.&B1
-         AGO   .CHK1
-.TST1    AIF   (T'&T(3) NE 'O').TST1M
-         &T(2) &A.&B1
+         MNOTE 12,'TESTING INSTRUCTION REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST1    ANOP
+         AIF   (T'&T(3) NE 'O').TST1M
+         &T(2) &A
          AGO   .CHK1
 .TST1M   ANOP
-         &T(2) &A,&T(3).&B1
-.CHK1    AIF   ('&CONN' EQ 'OR' ).OR
+         &T(2) &A,&T(3)
+         AGO   .CHK1
+.OK1X    ANOP
+         AIF   (T'&T(2) NE 'O').TST1X
+         CLI   &A,&B
+         AGO   .CHK1
+.TST1X   ANOP
+         AIF   (T'&T(3) NE 'O').TST1XM
+         &T(2) &A,&B
+         AGO   .CHK1
+.TST1XM  ANOP
+         &T(2) &A,&T(3),&B
+.CHK1    ANOP
+         AIF   ('&CONN' EQ 'OR' ).OR
 &X       SETC  'N'.'&T(1)'(1,1)
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
 &X       SETC  '&T(1)'(2,1)
@@ -110,20 +119,28 @@ SL&LVL&Q DS    0H
          MNOTE 8,'MISSING OPERAND(S) IN ''WHEN'' STATEMENT'
          AGO   .EXIT
 .OK2     ANOP
-&D1      SETC  ''
          AIF   ('&C' EQ '$NOOP').CHK2
-&D1      SETC  ','.'&D'
          AIF   ('&D' NE '$NOOP').OK2X
-&D1      SETC  ''
-.OK2X    ANOP
          AIF   (T'&S(2) NE 'O').TST2
-         CLI   &C.&D1
-         AGO   .CHK2
-.TST2    AIF   (T'&S(3) NE 'O').TST2M
-         &S(2) &C.&D1
+         MNOTE 12,'WHEN INSTRUCTION 2 REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST2    ANOP
+         AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C
          AGO   .CHK2
 .TST2M   ANOP
-         &S(2) &C,&S(3).&D1
+         &S(2) &C,&S(3)
+         AGO   .CHK2
+.OK2X    ANOP
+         AIF   (T'&S(2) NE 'O').TST2X
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2X   ANOP
+         AIF   (T'&S(3) NE 'O').TST2XM
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2XM  ANOP
+         &S(2) &C,&S(3),&D
 .CHK2    ANOP
 &X       SETC  'N'.'&S(1)'(1,1)
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
