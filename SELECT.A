@@ -61,7 +61,7 @@
 &Q       SETC  '&SLSEQ'
 * ------------------------------------------------------------------- *
          AIF   (&SLSEQ EQ 1).BYPASS
-         B     SL&LVL.99
+         J     SL&LVL.99
 .BYPASS  ANOP
 &SLSEQ   SETA  &SLSEQ+1
 &N       SETC  '&SLSEQ'
@@ -99,7 +99,7 @@ SL&LVL&Q DS    0H
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
 &X       SETC  '&T(1)'(2,1)
 .CHK1N   ANOP
-         B&X   SL&LVL&N
+         J&X   SL&LVL&N
          AGO   .NEXT
 * ------------------------------------------------------------------- *
 .OR      ANOP
@@ -107,7 +107,7 @@ SL&LVL&Q DS    0H
          AIF   ('&X' NE 'N').ORN
 &X       SETC  '&T(1)'(1,2)
 .ORN     ANOP
-         B&X   DO&LVL&Q
+         J&X   DO&LVL&Q
          AGO   .AND
 * ------------------------------------------------------------------- *
 .NEXT    AIF   (T'&CONN EQ 'O').EXIT
@@ -146,7 +146,7 @@ SL&LVL&Q DS    0H
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
 &X       SETC  '&S(1)'(2,1)
 .CHK2N   ANOP
-         B&X   SL&LVL&N
+         J&X   SL&LVL&N
          AGO   .EXIT
 * ------------------------------------------------------------------- *
 .EXIT    ANOP

@@ -86,7 +86,7 @@ IF&LVL   DS    0H
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
 &X       SETC  '&T(1)'(2,1)
 .CHK1N   ANOP
-         B&X   ELSE&SYSNDX
+         J&X   ELSE&SYSNDX
          AGO   .NEXT
 * ------------------------------------------------------------------- *
 .BC      AIF   (T'&S EQ 'O').OR
@@ -113,12 +113,12 @@ IF&LVL   DS    0H
 &X       SETC  '&T(1)'(1,2)
 .ORN     AIF   ('&CONN' EQ 'BC' ).ORB
          AIF   ('&CONN' EQ 'BCR').ORBR
-         B&X   THEN&SYSNDX
+         J&X   THEN&SYSNDX
          AGO   .AND
 .ORBR    ANOP
 &X       SETC  '&X'.'R'
 .ORB     ANOP
-         B&X   &C
+         J&X   &C
          AIF   (T'&S EQ 'O' OR T'&D EQ 'O' ).EXIT
          &S    &D
          AGO   .EXIT
@@ -159,7 +159,7 @@ IF&LVL   DS    0H
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
 &X       SETC  '&S(1)'(2,1)
 .CHK2N   ANOP
-         B&X   ELSE&SYSNDX
+         J&X   ELSE&SYSNDX
          AGO   .EXIT
 * ------------------------------------------------------------------- *
 .EXIT    ANOP
@@ -212,7 +212,7 @@ THEN&LVL DS    0H
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
 &X       SETC  '&T(1)'(2,1)
 .CHK1N   ANOP
-         B&X   ELSE&LVL
+         J&X   ELSE&LVL
          AGO   .NEXT
 * ------------------------------------------------------------------- *
 .NEXT    AIF   (T'&CONN EQ 'O').EXIT
@@ -251,7 +251,7 @@ THEN&LVL DS    0H
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
 &X       SETC  '&S(1)'(2,1)
 .CHK2N   ANOP
-         B&X   ELSE&LVL
+         J&X   ELSE&LVL
          AGO   .EXIT
 * ------------------------------------------------------------------- *
 .EXIT    ANOP
@@ -269,7 +269,7 @@ THEN&LVL DS    0H
 .OK      ANOP
 &LVL     SETC  '&IFNDX(&IFLVL)'
 * ------------------------------------------------------------------- *
-         B     ENDF&LVL
+         J     ENDF&LVL
 ELSE&LVL DS    0H
 &IFSEQ(&IFLVL) SETA &IFSEQ(&IFLVL)+1
 * ------------------------------------------------------------------- *

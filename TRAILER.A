@@ -1,9 +1,6 @@
          MACRO
 &LABEL   TRAILER &RETCODE=0,&SVAREA=
          GBLB  &HDRFLG,&HDRSVA
-         AIF   (&HDRFLG OR T'&SVAREA(1) EQ 'O').CHECK
-         MNOTE 12,'''SVAREA'' NOT ALLOWED WITHOUT ''BASE'' IN HEADER'
-         MEXIT
 .CHECK   AIF   (NOT &HDRSVA).GOOD
          AIF   (T'&SVAREA(1) NE 'O').GOOD
          MNOTE 12,'''SVAREA'' REQUIRED IN TRAILER WHEN IN HEADER'
@@ -34,6 +31,7 @@
 *                   from system GETVIS                                *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .GOOD    ANOP
+CODE     LOCTR
 &LABEL   DS    0H   TERMINATE CONTROL SECTION
          AIF   (T'&SVAREA(1) EQ 'O').RCF
          AIF   (T'&SVAREA(1) EQ 'D').RCF
@@ -116,7 +114,7 @@
          FREEVIS SVA=YES               RELEASE DYNAMIC STORAGE AREA
 .CHK     ANOP
          IF    15,(NZERO,LTR),15       IF UNABLE TO RELEASE STORAGE
-          CANCEL ALL                    CANCEL THE PROGRAM
+          CANCEL                      , CANCEL THE PROGRAM
          ENDIF
 *
 .EXIT    ANOP

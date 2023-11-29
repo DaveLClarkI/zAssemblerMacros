@@ -73,7 +73,7 @@ WHIL&LVL DS    0H
          AIF   ('&T(1)'(1,1) NE 'N').CHK1N
 &X       SETC  '&T(1)'(2,1)
 .CHK1N   ANOP
-         B&X   WEND&SYSNDX
+         J&X   WEND&SYSNDX
          AGO   .NEXT
 * ------------------------------------------------------------------- *
 .OR      ANOP
@@ -81,7 +81,7 @@ WHIL&LVL DS    0H
          AIF   ('&X' NE 'N').ORN
 &X       SETC  '&T(1)'(1,2)
 .ORN     ANOP
-         B&X   WHDO&SYSNDX
+         J&X   WHDO&SYSNDX
          AGO   .AND
 * ------------------------------------------------------------------- *
 .NEXT    AIF   (T'&CONN EQ 'O').EXIT
@@ -120,7 +120,7 @@ WHIL&LVL DS    0H
          AIF   ('&S(1)'(1,1) NE 'N').CHK2N
 &X       SETC  '&S(1)'(2,1)
 .CHK2N   ANOP
-         B&X   WEND&SYSNDX
+         J&X   WEND&SYSNDX
          AGO   .EXIT
 * ------------------------------------------------------------------- *
 .EXIT    ANOP
@@ -136,7 +136,7 @@ WHDO&LVL DS    0H
          MEXIT
 .OK      ANOP
 * ------------------------------------------------------------------- *
-         B     WHIL&WHNDX(&WHLVL)
+         J     WHIL&WHNDX(&WHLVL)
 * ------------------------------------------------------------------- *
          MEND
          MACRO
@@ -148,7 +148,7 @@ WHDO&LVL DS    0H
          MEXIT
 .OK      ANOP
 * ------------------------------------------------------------------- *
-         B     WEND&WHNDX(&WHLVL)
+         J     WEND&WHNDX(&WHLVL)
 * ------------------------------------------------------------------- *
          MEND
          MACRO
@@ -162,7 +162,7 @@ WHDO&LVL DS    0H
 .OK      ANOP
 &LVL     SETC  '&WHNDX(&WHLVL)'
 * ------------------------------------------------------------------- *
-         B     WHIL&LVL
+         J     WHIL&LVL
 WEND&LVL DS    0H
 &WHSEQ(&WHLVL) SETA &WHSEQ(&WHLVL)+1
 * ------------------------------------------------------------------- *
