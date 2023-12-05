@@ -18,22 +18,23 @@
 *                <,BASE=<(>b1<,b2<,b3<,b4<,b5>>>)>>                   *
 *                <,SVAREA=<(>savearea<,SVA)>>                         *
 *                                                                     *
-* Where: '<>'       encloses optional operands                        *
-*        label      is the CSECT name (also for the eye-catcher)      *
-*        vrsn       is a 4-byte version number for the eye-catcher    *
-*        auth       is a 4-byte author name for the eye-catcher       *
-*        creadate   is an 8-byte creation date for the eye-catcher    *
+* Where: '<>'       encloses optional operands;                       *
+*        label      is the CSECT name (also for the eye-catcher);     *
+*        vrsn       is a 4-byte version number for the eye-catcher;   *
+*        auth       is a 4-byte author name for the eye-catcher;      *
+*        creadate   is an 8-byte creation date for the eye-catcher;   *
 *        b1 - b5    is up to 5 base register numbers or equated       *
-*                   symbols with register 15 defaulted if omitted     *
+*                   symbols with register 15 defaulted if omitted;    *
 *        savearea   is an optional savearea address (double-word      *
-*                   type) within the CSECT; or a dynamic savearea is  *
-*                   allocated in partition GETVIS (the dynamic area   *
-*                   address is returned in reg. 13) if you specify    *
-*                   this as a length -- using a number/equated-symbol *
-*                   (for lengths up to 4095), half-word address (for  *
-*                   lengths up to 32767), or full-word address        *
-*        SVA        causes a dynamic savearea to be allocated in      *
-*                   system GETVIS                                     *
+*                   type) within the CSECT; or, if you specify this   *
+*                   as a length, a dynamic savearea is allocated in   *
+*                   partition GETVIS (the dynamic area address is     *
+*                   returned in reg.  13) -- for length, use a        *
+*                   number/equated-symbol (for lengths up to 4095),   *
+*                   a half-word address (for lengths up to 32767),    *
+*                   or a full-word address; and,                      *
+*        SVA        causes the dynamic savearea to be allocated in    *
+*                   system GETVIS.                                    *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .GOOD    ANOP
 &HDRFLG  SETB  1
@@ -58,16 +59,12 @@
 .ERR2    ANOP
          MNOTE 8,'ONLY FIVE BASE REGISTERS ARE SUPPORTED'
 .DONE    ANOP
-         AIF   (T'&BASE(1) EQ 'O').NOPE
-         MNOTE 0,'*** WARNING: DO NOT USE REGISTER 15 AS BASE ***'
-.NOPE    ANOP
-&LABEL   CSECT      INITIATE CONTROL SECTION
-         USING &LABEL,15               ESTABLISH TEMP BASE
+&LABEL   CSECT 0    INITIATE CONTROL SECTION
+         AIF   (T'&BASE(1) NE 'O').SKIP1
+         USING &LABEL,15               ESTABLISH BASE REGISTER
+.SKIP1   ANOP
 * ------------------------------------------------------------------- *
          J     HDR&LVL                 SKIP OVER CORE EYE-CATCHER
-         AIF   (T'&BASE(1) EQ 'O').SKIP
-         DROP  15                      DISESTABLISH TEMP BASE
-.SKIP    ANOP
 *
 DATA     LOCTR
 PGMNAME  DC    CL8'&LABEL'             PROGRAM

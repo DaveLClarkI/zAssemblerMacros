@@ -12,11 +12,11 @@
 * <label>  TRAILER <RETCODE=<(>retcode<,reg0<,reg1>)>>                *
 *                <,SVAREA=<(>savearea<,SVA)>>                         *
 *                                                                     *
-* Where: '<>'       encloses optional operands                        *
+* Where: '<>'       encloses optional operands;                       *
 *        retcode    is an optional return code address (full- or      *
 *                   half-word), return code value (specified as a     *
 *                   number) or return code register (specified as an  *
-*                   equated symbol) to return in reg15 to the caller  *
+*                   equated symbol) to return in reg15 to the caller; *
 *        reg0                                                         *
 *        reg1       is an optional return value address (full- or     *
 *                   half-word), return value literal (specified as a  *
@@ -26,9 +26,9 @@
 *                   type) within the CSECT; or a dynamic savearea is  *
 *                   released from partition GETVIS if you specify     *
 *                   this as a length -- using a number, equated       *
-*                   symbol, or address (half- or full-word)           *
-*        SVA        causes a dynamic savearea to be released          *
-*                   from system GETVIS                                *
+*                   symbol, or address (half- or full-word); and,     *
+*        SVA        causes the dynamic savearea to be released from   *
+*                   system GETVIS.                                    *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 .GOOD    ANOP
 CODE     LOCTR

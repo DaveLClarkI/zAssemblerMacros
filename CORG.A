@@ -1,0 +1,16 @@
+         MACRO
+         CORG  &D,&M
+.* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.* THIS MACRO FORCES ALIGNMENT OF THE LOCATION COUNTER TO THE GIVEN  *
+.* DISPLACEMENT FROM A BOUNDARY.  EXAMPLES:                          *
+.*       CORG  0,4                                                   *
+.*       CORG  0,8                                                   *
+.*       CORG  0,16                                                  *
+.*       CORG  0,32                                                  *
+.*       CORG  0,64                                                  *
+.*       CORG  0,128                                                 *
+.*       CORG  0,256                                                 *
+.*       CORG  0,512                                                 *
+.* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         ORG   &SYSECT+(&D)+(&M)*((*-&SYSECT+(&M)-(&D)-1)/(&M))
+         MEND
