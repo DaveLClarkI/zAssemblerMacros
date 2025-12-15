@@ -1,4 +1,3 @@
- BKEND
          MACRO
 &LBLNAME IF    &A,&T,&B,&CONN,&C,&S,&D,&BAD
          GBLA  &IFLVL,&IFSEQ(8)
@@ -297,15 +296,14 @@ ENDF&LVL DS    0H
 * ------------------------------------------------------------------- *
 &IFLVL   SETA  &IFLVL-1
          MEND
+         MACRO
 * =================================================================== *
 * simulated branch to label mnemonics
-         MACRO
-&LBLNAME BK    &DEST
-&LBLNAME BC    3,&DEST            branch on carry
+&LBLNAME JK    &DEST
+&LBLNAME JC    3,&DEST            jump on carry
          MEND
          MACRO
-&LBLNAME BNK   &DEST
-&LBLNAME BC    12,&DEST           branch on no carry
-         MEND
+&LBLNAME JNK   &DEST
+&LBLNAME JC    12,&DEST           jump on no carry
 * =================================================================== *
- BKEND
+         MEND

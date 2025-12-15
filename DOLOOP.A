@@ -1,0 +1,188 @@
+         MACRO
+&LBLNAME DOLOOP                        , CONDITIONS IN 'UNTIL' MACRO
+         GBLA  &DOLVL,&DOSEQ(5)
+         GBLC  &DONDX(5)
+         LCLC  &LVL
+         AGO   .GOOD
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The DOLOOP construct utilizes the following format:                 *
+*                                                                     *
+* <label>  DOLOOP                                                     *
+*          <LEAVE>                                                    *
+*          <ITER>                                                     *
+*          UNTIL expression<,{AND¦OR},expression>                     *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        '{¦}'      encloses mutually exclusive operands              *
+*        expression form:  oper,(cond<,instr<,mask>>),oper            *
+*                   where: oper  are the operands to be tested (which *
+*                                2nd operand may be $NOOP, as needed) *
+*                          '()'  optional, if only "cond" is coded    *
+*                          cond  is the testing condition desired     *
+*                                (e.g. 'E', 'NE', 'H', 'NH', etc.)    *
+*                          instr is the testing instruction desired   *
+*                                (defaults to 'CLI' if omitted)       *
+*                          mask  is the testing mask (if needed)      *
+*        'AND¦OR'   Boolean conector for double condition testing     *
+*                                                                     *
+* Note: Up to 5 levels of nesting are currently supported.            *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    AIF   (&DOLVL LT 5).NEST
+         MNOTE 12,'NESTING ERROR IN ''DOLOOP'' PROCESSING'
+         MEXIT
+.NEST    ANOP
+&DOLVL   SETA  &DOLVL+1                UP 1 NESTING LEVEL
+         MNOTE *,'''DOLOOP'' NESTING AT LEVEL &DOLVL'
+&DOSEQ(&DOLVL) SETA 1                  SET ACTIVE
+&DONDX(&DOLVL) SETC '&SYSNDX'
+&LVL     SETC  '&DONDX(&DOLVL)'
+* ------------------------------------------------------------------- *
+&LBLNAME DS    0H                      ENTRY TO DOLOOP
+LOOP&LVL DS    0H                      TOP OF DOLOOP
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         LEAVE                         , IMMED EXIT FROM DOLOOP
+         GBLA  &DOLVL,&DOSEQ(5)
+         GBLC  &DONDX(5)
+         AIF   (&DOSEQ(&DOLVL) EQ 1).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''DOLOOP'' PROCESSING'
+         MEXIT
+.OK      ANOP
+* ------------------------------------------------------------------- *
+         J     DOXT&DONDX(&DOLVL)      EXIT DOLOOP
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         ITER                          , SKIP TO DOLOOP CONDITIONS
+         GBLA  &DOLVL,&DOSEQ(5)
+         GBLC  &DONDX(5)
+         AIF   (&DOSEQ(&DOLVL) EQ 1).OK
+         MNOTE 12,'SEQUENCE ERROR IN ''DOLOOP'' PROCESSING'
+         MEXIT
+.OK      ANOP
+* ------------------------------------------------------------------- *
+         J     DOIT&DONDX(&DOLVL)      ITERATE DOLOOP
+* ------------------------------------------------------------------- *
+         MEND
+         MACRO
+         UNTIL &A,&T,&B,&CONN,&C,&S,&D,&BAD , DOLOOP CONDITIONS
+         GBLA  &DOLVL,&DOSEQ(5)
+         GBLC  &DONDX(5)
+         LCLC  &LVL,&X
+         AIF   (T'&BAD EQ 'O').GOOD
+         MNOTE 12,'TOO MANY OPERANDS IN ''UNTIL'' STATEMENT'
+         MEXIT
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* The DOLOOP construct utilizes the following format:                 *
+*                                                                     *
+* <label>  DOLOOP                                                     *
+*          <LEAVE>                                                    *
+*          <ITER>                                                     *
+*          UNTIL expression<,{AND¦OR},expression>                     *
+*                                                                     *
+* Where: '<>'       encloses optional operands                        *
+*        '{¦}'      encloses mutually exclusive operands              *
+*        expression form:  oper,(cond<,instr<,mask>>),oper            *
+*                   where: oper  are the operands to be tested (which *
+*                                2nd operand may be $NOOP, as needed) *
+*                          '()'  optional, if only "cond" is coded    *
+*                          cond  is the testing condition desired     *
+*                                (e.g. 'E', 'NE', 'H', 'NH', etc.)    *
+*                          instr is the testing instruction desired   *
+*                                (defaults to 'CLI' if omitted)       *
+*                          mask  is the testing mask (if needed)      *
+*        'AND¦OR'   Boolean conector for double condition testing     *
+*                                                                     *
+* Note: Up to 5 levels of nesting are currently supported.            *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    ANOP
+&LVL     SETC  '&DONDX(&DOLVL)'
+* ------------------------------------------------------------------- *
+DOIT&LVL DS    0H
+         AIF   (T'&A NE 'O' AND T'&T NE 'O' AND T'&B NE 'O').OK1
+         MNOTE 12,'MISSING OPERAND(S) IN ''UNTIL'' STATEMENT'
+         MEXIT
+.OK1     ANOP
+         AIF   ('&B' NE '$NOOP').OK1X
+         AIF   (T'&T(2) NE 'O').TST1
+         MNOTE 12,'TESTING INSTRUCTION REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST1    ANOP
+         AIF   (T'&T(3) NE 'O').TST1M
+         &T(2) &A
+         AGO   .CHK1
+.TST1M   ANOP
+         &T(2) &A,&T(3)
+         AGO   .CHK1
+.OK1X    ANOP
+         AIF   (T'&T(2) NE 'O').TST1X
+         CLI   &A,&B
+         AGO   .CHK1
+.TST1X   ANOP
+         AIF   (T'&T(3) NE 'O').TST1XM
+         &T(2) &A,&B
+         AGO   .CHK1
+.TST1XM  ANOP
+         &T(2) &A,&T(3),&B
+.CHK1    ANOP
+         AIF   ('&CONN' EQ 'OR'  ).OR
+&X       SETC  'N'.'&T(1)'(1,1)
+         AIF   ('&T(1)'(1,1) NE 'N').CHK1N
+&X       SETC  '&T(1)'(1,2)
+.CHK1N   ANOP
+         J&X   LOOP&LVL
+         AGO   .NEXT
+* ------------------------------------------------------------------- *
+.OR      ANOP
+&X       SETC  '&T(1)'(1,1)
+         AIF   ('&X' NE 'N').ORN
+&X       SETC  '&T(1)'(1,2)
+.ORN     ANOP
+         J&X   DOXT&LVL
+         AGO   .AND
+* ------------------------------------------------------------------- *
+.NEXT    AIF   (T'&CONN EQ 'O').EXIT
+         AIF   ('&CONN' EQ 'AND').AND
+         MNOTE 8,'UNKNOWN CONNECTOR ''&CONN'' IN ''UNTIL'' STATEMENT'
+         AGO   .EXIT
+* ------------------------------------------------------------------- *
+.AND     AIF   (T'&C NE 'O' AND T'&S NE 'O' AND T'&D NE 'O').OK2
+         MNOTE 8,'MISSING OPERAND(S) IN ''UNTIL'' STATEMENT'
+         AGO   .EXIT
+.OK2     ANOP
+         AIF   ('&D' NE '$NOOP').OK2X
+         AIF   (T'&S(2) NE 'O').TST2
+         MNOTE 12,'UNTIL INSTRUCTION 2 REQUIRED FOR SINGLE COMPARAND'
+         MEXIT
+.TST2    ANOP
+         AIF   (T'&S(3) NE 'O').TST2M
+         &S(2) &C
+         AGO   .CHK2
+.TST2M   ANOP
+         &S(2) &C,&S(3)
+         AGO   .CHK2
+.OK2X    ANOP
+         AIF   (T'&S(2) NE 'O').TST2X
+         CLI   &C,&D
+         AGO   .CHK2
+.TST2X   ANOP
+         AIF   (T'&S(3) NE 'O').TST2XM
+         &S(2) &C,&D
+         AGO   .CHK2
+.TST2XM  ANOP
+         &S(2) &C,&S(3),&D
+.CHK2    ANOP
+&X       SETC  'N'.'&S(1)'(1,1)
+         AIF   ('&S(1)'(1,1) NE 'N').CHK2N
+&X       SETC  '&S(1)'(2,1)
+.CHK2N   ANOP
+         J&X   LOOP&LVL
+         AGO   .EXIT
+.EXIT    ANOP
+* ------------------------------------------------------------------- *
+DOXT&LVL DS    0H                      END OF DOLOOP
+* ------------------------------------------------------------------- *
+&DOSEQ(&DOLVL) SETA 0                  SET INACTIVE
+&DOLVL   SETA  &DOLVL-1                DOWN 1 NESTING LEVEL
+         MEND

@@ -1,0 +1,13 @@
+         MACRO                                                                  
+&LABEL   DATAAREA                                                               
+         AGO   .GOOD                                                            
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+* The DATAAREA macro compliments the HEADER and TRAILER macros.       *         
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+.GOOD    ANOP                                                                   
+         CORG  0,256                                                            
+DATA     LOCTR                                                                  
+&LABEL   DS    0D                                                       00019900
+.EXIT    ANOP                                                                   
+* ------------------------------------------------------------------- *         
+         MEND                                                                   
