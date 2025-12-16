@@ -1,0 +1,12 @@
+         MACRO                                                                  
+         DATAEND                                                                
+         AGO   .GOOD                                                            
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+* The DATAEND macro compliments the HEADER and TRAILER macros.        *         
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *         
+.GOOD    ANOP                                                                   
+DATA     LOCTR                                                                  
+         CORG  0,256                                                            
+.EXIT    ANOP                                                                   
+* ------------------------------------------------------------------- *         
+         MEND                                                                   
