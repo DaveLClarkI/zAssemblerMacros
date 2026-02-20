@@ -1,0 +1,9 @@
+         MACRO
+&LABEL   SHI   &A,&B
+         AGO   .GOOD
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* "SHI" - SIMPLE MACRO TO TURN "AHI" INTO SUBTRACT INSTEAD OF ADD.    *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.GOOD    ANOP
+&LABEL   AHI   &A,-(&B)
+         MEND
